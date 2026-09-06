@@ -1,0 +1,48 @@
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
+import { verifyToken } from "../utils/jwt.js";
+
+export const authenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+
+      return;
+    }
+
+    const [scheme, token] = authHeader.split(" ");
+
+    if (scheme !== "Bearer" || !token) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid authorization header",
+      });
+
+      return;
+    }
+
+    const payload = verifyToken(token);
+
+    req.user = payload;
+
+    next();
+  } catch {
+    res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+};
