@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import {createTask,getTasks,getTaskById,updateTask,deleteTask} from "../services/task.service.js";
 
+// Create a new task
 export const create = async (
   req: Request,
   res: Response
@@ -37,6 +38,7 @@ export const create = async (
   }
 };
 
+// Get all tasks
 export const getAll = async (
   _req: Request,
   res: Response
@@ -61,6 +63,7 @@ export const getAll = async (
   }
 };
 
+// Get a task by ID
 export const getById = async (
   req: Request<{ id: string }>,
   res: Response
@@ -94,14 +97,26 @@ export const getById = async (
   }
 };
 
+// Update a task
 export const update = async (
   req: Request<{ id: string }>,
   res: Response
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+
+      return;
+    }
+
     const task = await updateTask(
       req.params.id,
-      req.body
+      req.body,
+      req.user.userId,
+      req.user.role
     );
 
     if (!task) {
@@ -121,6 +136,19 @@ export const update = async (
       },
     });
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        "You do not have permission to update this task"
+    ) {
+      res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+
+      return;
+    }
+
     console.error("Update task error:", error);
 
     res.status(500).json({
@@ -130,12 +158,26 @@ export const update = async (
   }
 };
 
+// Delete a task
 export const remove = async (
   req: Request<{ id: string }>,
   res: Response
 ): Promise<void> => {
   try {
-    const task = await deleteTask(req.params.id);
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+
+      return;
+    }
+
+    const task = await deleteTask(
+      req.params.id,
+      req.user.userId,
+      req.user.role
+    );
 
     if (!task) {
       res.status(404).json({
@@ -151,6 +193,19 @@ export const remove = async (
       message: "Task deleted successfully",
     });
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        "You do not have permission to delete this task"
+    ) {
+      res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+
+      return;
+    }
+
     console.error("Delete task error:", error);
 
     res.status(500).json({

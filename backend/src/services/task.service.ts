@@ -1,6 +1,8 @@
 import Task from "../models/Task.js";
-import type { CreateTaskInput,UpdateTaskInput } from "../validations/task.validation.js";
+import type { UserRole } from "../constants/roles.js";
+import type { CreateTaskInput,UpdateTaskInput} from "../validations/task.validation.js";
 
+// Create a new task
 export const createTask = async (
   data: CreateTaskInput,
   creatorId: string
@@ -15,6 +17,7 @@ export const createTask = async (
   return task;
 };
 
+// Get all tasks
 export const getTasks = async () => {
   return Task.find()
     .populate("creator", "firstName lastName username email")
@@ -28,22 +31,60 @@ export const getTaskById = async (taskId: string) => {
     .populate("assignedUser", "firstName lastName username email");
 };
 
+// Update a task
 export const updateTask = async (
   taskId: string,
-  data: UpdateTaskInput
+  data: UpdateTaskInput,
+  userId: string,
+  userRole: UserRole
 ) => {
-  return Task.findByIdAndUpdate(
-    taskId,
-    data,
-    {
-      new: true,
-      runValidators: true,
-    }
-  )
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    return null;
+  }
+
+  const isAdmin = userRole === "ADMIN";
+  const isCreator = task.creator.toString() === userId;
+
+  if (!isAdmin && !isCreator) {
+    throw new Error("You do not have permission to update this task");
+  }
+
+  task.title = data.title ?? task.title;
+  task.description = data.description ?? task.description;
+
+  if (data.status !== undefined) {
+    task.status = data.status;
+  }
+
+  await task.save();
+
+  return Task.findById(task._id)
     .populate("creator", "firstName lastName username email")
     .populate("assignedUser", "firstName lastName username email");
 };
 
-export const deleteTask = async (taskId: string) => {
-  return Task.findByIdAndDelete(taskId);
+// Delete a task
+export const deleteTask = async (
+  taskId: string,
+  userId: string,
+  userRole: UserRole
+) => {
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    return null;
+  }
+
+  const isAdmin = userRole === "ADMIN";
+  const isCreator = task.creator.toString() === userId;
+
+  if (!isAdmin && !isCreator) {
+    throw new Error("You do not have permission to delete this task");
+  }
+
+  await Task.findByIdAndDelete(taskId);
+
+  return task;
 };
