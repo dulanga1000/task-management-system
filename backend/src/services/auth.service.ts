@@ -1,12 +1,14 @@
 import User from "../models/User.js";
-import { hashPassword } from "../utils/password.js";
-import type { RegisterInput } from "../validations/auth.validation.js";
-import { comparePassword } from "../utils/password.js";
+import {hashPassword,comparePassword} from "../utils/password.js";
+import type {RegisterInput,LoginInput} from "../validations/auth.validation.js";
 import { generateToken } from "../utils/jwt.js";
-import type { LoginInput } from "../validations/auth.validation.js";
+import { AppError } from "../utils/app-error.js";
+import { validateObjectId } from "../utils/validate-object-id.js";
 
-//Register a new user
-export const registerUser = async (data: RegisterInput) => {
+// Register a new user
+export const registerUser = async (
+  data: RegisterInput
+) => {
   const username = data.username.toLowerCase();
   const email = data.email.toLowerCase();
 
@@ -15,7 +17,10 @@ export const registerUser = async (data: RegisterInput) => {
   });
 
   if (existingUsername) {
-    throw new Error("Username is already taken");
+    throw new AppError(
+      "Username is already taken",
+      409
+    );
   }
 
   const existingUser = await User.findOne({
@@ -23,10 +28,15 @@ export const registerUser = async (data: RegisterInput) => {
   });
 
   if (existingUser) {
-    throw new Error("Email is already registered");
+    throw new AppError(
+      "Email is already registered",
+      409
+    );
   }
 
-  const hashedPassword = await hashPassword(data.password);
+  const hashedPassword = await hashPassword(
+    data.password
+  );
 
   const user = await User.create({
     firstName: data.firstName,
@@ -48,7 +58,9 @@ export const registerUser = async (data: RegisterInput) => {
 };
 
 // Login a user
-export const loginUser = async (data: LoginInput) => {
+export const loginUser = async (
+  data: LoginInput
+) => {
   const email = data.email.toLowerCase();
 
   const user = await User.findOne({
@@ -56,7 +68,10 @@ export const loginUser = async (data: LoginInput) => {
   }).select("+password");
 
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new AppError(
+      "Invalid email or password",
+      401
+    );
   }
 
   const isPasswordValid = await comparePassword(
@@ -65,7 +80,10 @@ export const loginUser = async (data: LoginInput) => {
   );
 
   if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
+    throw new AppError(
+      "Invalid email or password",
+      401
+    );
   }
 
   const token = generateToken({
@@ -87,11 +105,18 @@ export const loginUser = async (data: LoginInput) => {
 };
 
 // Get current user
-export const getCurrentUser = async (userId: string) => {
+export const getCurrentUser = async (
+  userId: string
+) => {
+  validateObjectId(userId, "user ID");
+
   const user = await User.findById(userId);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(
+      "User not found",
+      404
+    );
   }
 
   return {
