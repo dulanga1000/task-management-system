@@ -1,10 +1,5 @@
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
-
-import { verifyToken } from "../utils/jwt.js";
+import type {Request,Response,NextFunction} from "express";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 export const authenticate = (
   req: Request,
@@ -34,7 +29,7 @@ export const authenticate = (
       return;
     }
 
-    const payload = verifyToken(token);
+    const payload = verifyAccessToken(token);
 
     req.user = payload;
 
