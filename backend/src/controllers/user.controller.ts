@@ -1,11 +1,11 @@
-import type { Request, Response } from "express";
-
-import { getUsers, getUserById } from "../services/user.service.js";
+import type {Request,Response,NextFunction} from "express";
+import {getUsers,getUserById} from "../services/user.service.js";
 
 // Get all users
 export const getAll = async (
   _req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const users = await getUsers();
@@ -18,19 +18,15 @@ export const getAll = async (
       },
     });
   } catch (error) {
-    console.error("Get users error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve users",
-    });
+    next(error);
   }
 };
 
 // Get a user by ID
 export const getById = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const user = await getUserById(req.params.id);
@@ -52,11 +48,6 @@ export const getById = async (
       },
     });
   } catch (error) {
-    console.error("Get user error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve user",
-    });
+    next(error);
   }
 };

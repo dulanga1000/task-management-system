@@ -1,10 +1,11 @@
-import type { Request, Response } from "express";
+import type {Request,Response,NextFunction} from "express";
 import {getCurrentUser,loginUser,registerUser} from "../services/auth.service.js";
 
-//Register a new user
+// Register a new user
 export const register = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const user = await registerUser(req.body);
@@ -17,34 +18,15 @@ export const register = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (
-        error.message === "Username is already taken" ||
-        error.message === "Email is already registered"
-      )
-    ) {
-      res.status(409).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Registration error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to register user",
-    });
+    next(error);
   }
 };
 
 // Login a user
 export const login = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const result = await loginUser(req.body);
@@ -55,31 +37,15 @@ export const login = async (
       data: result,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "Invalid email or password"
-    ) {
-      res.status(401).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Login error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to login",
-    });
+    next(error);
   }
 };
 
 // Get current user
 export const getMe = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -101,23 +67,6 @@ export const getMe = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "User not found"
-    ) {
-      res.status(404).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Get current user error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve user",
-    });
+    next(error);
   }
 };
