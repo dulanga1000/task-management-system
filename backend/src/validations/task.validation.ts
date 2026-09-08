@@ -53,3 +53,12 @@ export const updateTaskSchema = z.object({
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+
+// Assign task schema
+export const assignTaskSchema = z.object({
+  assignedUserId: z
+    .string({ error: "Assigned user ID is required" })
+    .min(1, { error: "Assigned user ID is required" }),
+});
+
+export type AssignTaskInput = z.infer<typeof assignTaskSchema>;

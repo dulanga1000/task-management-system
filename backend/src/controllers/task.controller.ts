@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import {createTask,getTasks,getTaskById,updateTask,deleteTask} from "../services/task.service.js";
+import {createTask,getTasks,getTaskById,updateTask,assignTask,deleteTask} from "../services/task.service.js";
 
 // Create a new task
 export const create = async (
@@ -154,6 +154,73 @@ export const update = async (
     res.status(500).json({
       success: false,
       message: "Failed to update task",
+    });
+  }
+};
+
+// Assign a task
+export const assign = async (
+  req: Request<{ id: string }>,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+
+      return;
+    }
+
+    const task = await assignTask(
+      req.params.id,
+      req.body,
+      req.user.userId,
+      req.user.role
+    );
+
+    if (!task) {
+      res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Task assigned successfully",
+      data: {
+        task,
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (
+        error.message ===
+          "You can only assign an unassigned task to yourself" ||
+        error.message ===
+          "You do not have permission to assign this task" ||
+        error.message ===
+          "Assigned user not found"
+      )
+    ) {
+      res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+
+      return;
+    }
+
+    console.error("Assign task error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to assign task",
     });
   }
 };
