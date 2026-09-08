@@ -1,8 +1,8 @@
 import { Router } from "express";
-import {create,getAll,getById,update,remove} from "../controllers/task.controller.js";
+import {create,getAll,getById,update,assign,remove} from "../controllers/task.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import {createTaskSchema,updateTaskSchema} from "../validations/task.validation.js";
+import {assignTaskSchema, createTaskSchema,updateTaskSchema} from "../validations/task.validation.js";
 
 const router = Router();
 
@@ -30,6 +30,13 @@ router.patch(
   authenticate,
   validate(updateTaskSchema),
   update
+);
+
+router.patch(
+  "/:id/assignment",
+  authenticate,
+  validate(assignTaskSchema),
+  assign
 );
 
 router.delete(
