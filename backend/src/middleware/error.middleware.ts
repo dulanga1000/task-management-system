@@ -1,4 +1,9 @@
-import type { Request, Response, NextFunction } from "express";
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import { AppError } from "../utils/app-error.js";
 
 export const errorMiddleware = (
@@ -20,6 +25,7 @@ export const errorMiddleware = (
 
   res.status(500).json({
     success: false,
-    message: "Internal server error",
+    message:
+      "Internal server error",
   });
 };

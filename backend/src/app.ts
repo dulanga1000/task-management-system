@@ -2,15 +2,21 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+
 import { env } from "./config/env.js";
+
 import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import userRoutes from "./routes/user.routes.js";
+
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
-// Security
+// --------------------------------------------------
+// SECURITY
+// --------------------------------------------------
+
 app.use(helmet());
 
 app.use(
@@ -20,27 +26,59 @@ app.use(
   })
 );
 
-// Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// --------------------------------------------------
+// BODY PARSING
+// --------------------------------------------------
 
-// Cookie parser
+app.use(express.json());
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+
+// --------------------------------------------------
+// COOKIES
+// --------------------------------------------------
+
 app.use(cookieParser());
 
-// Health check
+// --------------------------------------------------
+// HEALTH CHECK
+// --------------------------------------------------
+
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
     success: true,
-    message: "Task Management System API is running",
+    message:
+      "Task Management System API is running",
   });
 });
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/users", userRoutes);
+// --------------------------------------------------
+// ROUTES
+// --------------------------------------------------
 
-// Global error handler
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/tasks",
+  taskRoutes
+);
+
+app.use(
+  "/api/users",
+  userRoutes
+);
+
+// --------------------------------------------------
+// GLOBAL ERROR HANDLER
+// --------------------------------------------------
+
 app.use(errorMiddleware);
 
 export default app;
