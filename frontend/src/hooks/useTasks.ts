@@ -20,9 +20,12 @@ import type {
   Task,
   UpdateTaskData,
 } from "@/types/task";
+import type { PaginationMeta } from "@/types/pagination";
 
 interface UseTasksOptions {
   enabled?: boolean;
+  initialPage?: number;
+  initialLimit?: number;
 }
 
 export default function useTasks(
@@ -30,16 +33,16 @@ export default function useTasks(
 ) {
   const {
     enabled = true,
+    initialPage = 1,
+    initialLimit = 10,
   } = options;
 
-  const [tasks, setTasks] =
-    useState<Task[]>([]);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [page, setPage] = useState(initialPage);
+  const [limit, setLimit] = useState(initialLimit);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // ----------------------------------------------
   // GET TASKS
@@ -55,31 +58,31 @@ export default function useTasks(
         setLoading(true);
         setError("");
 
-        const response =
-          await getTasks();
+        const response = await getTasks({ page, limit });
 
-        setTasks(
-          response.data.tasks
-        );
-      } catch (error: any) {
+        setTasks(response.data.tasks);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        }
+      } catch (err: any) {
         console.error(
           "Get tasks failed:",
-          error?.response?.data || error
+          err?.response?.data || err
         );
 
         setError(
-          error?.response?.data?.message ||
+          err?.response?.data?.message ||
             "Failed to load tasks."
         );
       } finally {
         setLoading(false);
       }
     },
-    [enabled]
+    [enabled, page, limit]
   );
 
   // ----------------------------------------------
-  // FETCH WHEN AUTH IS READY
+  // FETCH WHEN AUTH OR PARAMS ARE READY
   // ----------------------------------------------
 
   useEffect(() => {
@@ -204,10 +207,20 @@ export default function useTasks(
     return assignedTask;
   };
 
+  const handleSetLimit = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to page 1 on page size change
+  };
+
   const clearError = () => setError("");
 
   return {
     tasks,
+    pagination,
+    page,
+    setPage,
+    limit,
+    setLimit: handleSetLimit,
     loading,
     error,
     clearError,

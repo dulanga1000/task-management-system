@@ -1,20 +1,26 @@
-import type {Request,Response,NextFunction} from "express";
-import {getUsers,getUserById} from "../services/user.service.js";
+import type { Request, Response, NextFunction } from "express";
+import { getUsers, getUserById } from "../services/user.service.js";
 
-// Get all users
+// Get all users with optional pagination
 export const getAll = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const users = await getUsers();
+    const { page, limit } = req.query;
+
+    const { users, pagination } = await getUsers({
+      page: page as string | undefined,
+      limit: limit as string | undefined,
+    });
 
     res.status(200).json({
       success: true,
       message: "Users retrieved successfully",
       data: {
         users,
+        pagination,
       },
     });
   } catch (error) {

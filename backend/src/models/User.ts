@@ -65,6 +65,8 @@ const userSchema = new Schema<IUser>(
   }
 );
 
+userSchema.index({ createdAt: -1 });
+
 const User = mongoose.model<IUser>("User", userSchema);
 
 export default User;

@@ -23,6 +23,7 @@ export default function AdminOverviewPage() {
     error: usersError,
   } = useUsers({
     enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 5,
   });
 
   const {
@@ -34,6 +35,7 @@ export default function AdminOverviewPage() {
     assignTask,
   } = useTasks({
     enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 5,
   });
 
   // Admin access guard
@@ -98,8 +100,8 @@ export default function AdminOverviewPage() {
           </div>
         )}
 
-        {/* Global Statistics */}
-        <AdminStats users={users} tasks={tasks} />
+        {/* Global Statistics (Aggregated from /api/admin/stats) */}
+        <AdminStats />
 
         {/* Recent Tasks Widget with Reassign & Actions */}
         <AdminTaskTable

@@ -8,6 +8,7 @@ import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
@@ -73,6 +74,11 @@ app.use(
 app.use(
   "/api/users",
   userRoutes
+);
+
+app.use(
+  "/api/admin",
+  adminRoutes
 );
 
 // --------------------------------------------------

@@ -6,28 +6,37 @@ import {
   CheckSquare,
   Clock,
   CheckCircle2,
-  AlertCircle,
   TrendingUp,
   UserX,
 } from "lucide-react";
-import type { Task } from "@/types/task";
-import type { User } from "@/types/user";
+import type { AdminStatsData } from "@/types/admin";
+import useAdminStats from "@/hooks/useAdminStats";
 import AdminStatWidget from "./AdminStatWidget";
 
 interface AdminStatsProps {
-  users: User[];
-  tasks: Task[];
+  stats?: AdminStatsData | null;
+  loading?: boolean;
 }
 
-export default function AdminStats({ users, tasks }: AdminStatsProps) {
-  const totalUsers = users.length;
-  const totalTasks = tasks.length;
+export default function AdminStats({
+  stats: propStats,
+  loading: propLoading,
+}: AdminStatsProps) {
+  // If stats not provided via props, fetch from the /api/admin/stats endpoint
+  const { stats: hookStats, loading: hookLoading } = useAdminStats({
+    enabled: !propStats,
+  });
 
-  const todoTasks = tasks.filter((t) => t.status === "TODO").length;
-  const doingTasks = tasks.filter((t) => t.status === "DOING").length;
-  const doneTasks = tasks.filter((t) => t.status === "DONE").length;
-  const unassignedTasks = tasks.filter((t) => !t.assignedUser).length;
+  const stats = propStats || hookStats;
+  const loading = propLoading || (propStats ? false : hookLoading);
 
+  const totalUsers = stats?.totalUsers ?? 0;
+  const totalTasks = stats?.totalTasks ?? 0;
+  const doingTasks = stats?.doingTasks ?? 0;
+  const doneTasks = stats?.doneTasks ?? 0;
+  const todoTasks = stats?.todoTasks ?? 0;
+
+  // Unassigned tasks = total tasks minus sum of assigned status tasks or calculated
   const completionRate =
     totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
@@ -38,7 +47,7 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
           System Overview & Metrics
         </h2>
         <p className="text-xs text-gray-400 font-medium">
-          Key governance and operational performance indicators.
+          Accurate system-wide metrics across all users and tasks.
         </p>
       </div>
 
@@ -46,7 +55,7 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
         {/* Total Users */}
         <AdminStatWidget
           title="Total Users"
-          value={totalUsers}
+          value={loading ? "..." : totalUsers}
           subtitle="Registered accounts"
           icon={Users}
           iconColor="text-purple-600"
@@ -56,7 +65,7 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
         {/* Total Tasks */}
         <AdminStatWidget
           title="Total Tasks"
-          value={totalTasks}
+          value={loading ? "..." : totalTasks}
           subtitle="All status columns"
           icon={CheckSquare}
           iconColor="text-blue-600"
@@ -66,7 +75,7 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
         {/* In Progress */}
         <AdminStatWidget
           title="In Progress"
-          value={doingTasks}
+          value={loading ? "..." : doingTasks}
           subtitle="Currently active"
           icon={Clock}
           iconColor="text-sky-600"
@@ -80,7 +89,7 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
         {/* Completed */}
         <AdminStatWidget
           title="Completed"
-          value={doneTasks}
+          value={loading ? "..." : doneTasks}
           subtitle="Marked as done"
           icon={CheckCircle2}
           iconColor="text-emerald-600"
@@ -91,25 +100,20 @@ export default function AdminStats({ users, tasks }: AdminStatsProps) {
           }}
         />
 
-        {/* Unassigned */}
+        {/* To Do */}
         <AdminStatWidget
-          title="Unassigned"
-          value={unassignedTasks}
-          subtitle="Needs allocation"
+          title="To Do"
+          value={loading ? "..." : todoTasks}
+          subtitle="Awaiting start"
           icon={UserX}
           iconColor="text-amber-600"
           iconBg="bg-amber-50"
-          badge={
-            unassignedTasks > 0
-              ? { text: "Action required", variant: "warning" }
-              : undefined
-          }
         />
 
         {/* Completion Rate */}
         <AdminStatWidget
           title="Completion"
-          value={`${completionRate}%`}
+          value={loading ? "..." : `${completionRate}%`}
           subtitle="System completion rate"
           icon={TrendingUp}
           iconColor="text-indigo-600"

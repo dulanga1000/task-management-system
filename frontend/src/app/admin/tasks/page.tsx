@@ -7,6 +7,7 @@ import { CheckSquare } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import useUsers from "@/hooks/useUsers";
 import useTasks from "@/hooks/useTasks";
+import useAdminStats from "@/hooks/useAdminStats";
 
 import AdminNavigation from "@/components/admin/AdminNavigation";
 import AdminSearchFilterBar from "@/components/admin/AdminSearchFilterBar";
@@ -23,16 +24,27 @@ export default function AdminTasksPage() {
     error: usersError,
   } = useUsers({
     enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 100, // Fetch users list for assignee dropdown and reassign modal
   });
 
   const {
     tasks,
+    pagination,
+    page,
+    setPage,
+    limit,
+    setLimit,
     loading: tasksLoading,
     error: tasksError,
     updateTask,
     deleteTask,
     assignTask,
   } = useTasks({
+    enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 10,
+  });
+
+  const { stats } = useAdminStats({
     enabled: !authLoading && user?.role === "ADMIN",
   });
 
@@ -54,7 +66,7 @@ export default function AdminTasksPage() {
     }
   }, [authLoading, user, router]);
 
-  // Filter tasks based on search, status, and assignee
+  // Client-side search and filtering on current page items
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       // 1. Search Query
@@ -135,6 +147,7 @@ export default function AdminTasksPage() {
     await deleteTask(taskId);
   };
 
+  const totalTasksCount = stats ? stats.totalTasks : pagination ? pagination.totalItems : tasks.length;
   const error = usersError || tasksError;
 
   return (
@@ -160,7 +173,7 @@ export default function AdminTasksPage() {
 
           <div className="flex items-center gap-2">
             <span className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs">
-              Total: {tasks.length} tasks
+              Total Platform Tasks: {totalTasksCount}
             </span>
           </div>
         </div>
@@ -180,19 +193,22 @@ export default function AdminTasksPage() {
           assigneeFilter={assigneeFilter}
           onAssigneeChange={setAssigneeFilter}
           users={userOptions}
-          placeholder="Search by task title, description, creator, or assignee..."
+          placeholder="Search page tasks by title, description, creator, or assignee..."
           totalResults={filteredTasks.length}
         />
 
-        {/* Full Task Table */}
+        {/* Full Task Table with Server-Side Pagination */}
         <AdminTaskTable
           tasks={filteredTasks}
           users={users}
+          pagination={pagination}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
           onReassignTask={handleReassignTask}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onDeleteTask={handleDeleteTask}
           title="All Platform Tasks"
-          subtitle="Filtered task items matching your query and status criteria."
+          subtitle="Page-based task listings matching your query and status criteria."
         />
       </div>
     </main>

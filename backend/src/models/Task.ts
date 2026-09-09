@@ -59,6 +59,8 @@ const taskSchema = new Schema<ITask>(
   }
 );
 
+taskSchema.index({ createdAt: -1 });
+
 const Task = mongoose.model<ITask>("Task", taskSchema);
 
 export default Task;

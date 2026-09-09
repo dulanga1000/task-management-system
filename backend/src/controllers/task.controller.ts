@@ -34,20 +34,26 @@ export const create = async (
   }
 };
 
-// Get all tasks
+// Get all tasks with optional pagination
 export const getAll = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const tasks = await getTasks();
+    const { page, limit } = req.query;
+
+    const { tasks, pagination } = await getTasks({
+      page: page as string | undefined,
+      limit: limit as string | undefined,
+    });
 
     res.status(200).json({
       success: true,
       message: "Tasks retrieved successfully",
       data: {
         tasks,
+        pagination,
       },
     });
   } catch (error) {
