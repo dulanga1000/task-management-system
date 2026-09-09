@@ -37,7 +37,7 @@ export const updateTask = async (
   taskId: string,
   data: UpdateTaskData
 ) => {
-  const response = await api.put<TaskResponse>(
+  const response = await api.patch<TaskResponse>(
     `/tasks/${taskId}`,
     data
   );
@@ -58,7 +58,7 @@ export const assignTask = async (
   data: AssignTaskData
 ) => {
   const response = await api.patch<TaskResponse>(
-    `/tasks/${taskId}/assign`,
+    `/tasks/${taskId}/assignment`,
     data
   );
 

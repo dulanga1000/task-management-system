@@ -67,8 +67,10 @@ export const updateTask = async (
   const isAdmin = userRole === USER_ROLES.ADMIN;
   const isCreator =
     task.creator.toString() === userId;
+  const isAssigned =
+    task.assignedUser?.toString() === userId;
 
-  if (!isAdmin && !isCreator) {
+  if (!isAdmin && !isCreator && !isAssigned) {
     throw new AppError(
       "You do not have permission to update this task",
       403
