@@ -29,6 +29,12 @@ export default function TaskCard({
     );
   }
 
+  // Strip HTML tags for clean text preview
+  const cleanDesc = task.description ? task.description.replace(/<[^>]*>?/gm, "").trim() : "";
+
+  const checklistTotal = task.checklist?.length || 0;
+  const checklistCompleted = task.checklist?.filter((i) => i.completed).length || 0;
+
   return (
     <div
       onClick={onClick}
@@ -38,6 +44,20 @@ export default function TaskCard({
           : "cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-md"
       } ${className}`}
     >
+      {/* Labels */}
+      {task.labels && task.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {task.labels.map((lbl) => (
+            <span
+              key={lbl.name}
+              className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${lbl.color}`}
+            >
+              {lbl.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Card Header: Title & Actions */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">
@@ -57,24 +77,47 @@ export default function TaskCard({
         </button>
       </div>
 
-      {/* Description */}
-      {task.description && (
+      {/* Clean Description Snippet */}
+      {cleanDesc && (
         <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-gray-500 font-normal">
-          {task.description}
+          {cleanDesc}
         </p>
       )}
 
       {/* Footer Info */}
       <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
-        {/* Date */}
-        <div className="flex items-center gap-1.5 text-gray-400">
-          <Clock className="h-3 w-3" />
-          <span className="text-[11px] font-medium">
-            {new Date(task.createdAt).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-            })}
-          </span>
+        {/* Date / Due Date / Checklist */}
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span className="text-[11px] font-medium">
+              {task.dueDate
+                ? new Date(task.dueDate).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : new Date(task.createdAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
+            </span>
+          </div>
+
+          {checklistTotal > 0 && (
+            <div
+              className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                checklistCompleted === checklistTotal
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+              title="Checklist progress"
+            >
+              <span>☑️</span>
+              <span>
+                {checklistCompleted}/{checklistTotal}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Assigned User Avatar or Quick Assign Button */}

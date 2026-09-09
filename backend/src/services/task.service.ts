@@ -12,6 +12,7 @@ import type {
   PaginationParams,
   PaginationMeta,
 } from "../types/pagination.js";
+import { logActivity } from "./activity.service.js";
 
 // Create a new task
 export const createTask = async (
@@ -23,6 +24,13 @@ export const createTask = async (
     description: data.description,
     creator: creatorId,
     assignedUser: null,
+    labels: data.labels || [],
+    dueDate: data.dueDate ? new Date(data.dueDate) : null,
+    checklist: data.checklist || [],
+  });
+
+  await logActivity(task._id.toString(), creatorId, "TASK_CREATED", {
+    newValue: task.status,
   });
 
   return task;
@@ -107,6 +115,10 @@ export const updateTask = async (
     );
   }
 
+  const previousStatus = task.status;
+  const previousTitle = task.title;
+  const previousDescription = task.description;
+
   task.title = data.title ?? task.title;
   task.description =
     data.description ?? task.description;
@@ -115,7 +127,36 @@ export const updateTask = async (
     task.status = data.status;
   }
 
+  if (data.labels !== undefined) {
+    task.labels = data.labels;
+  }
+
+  if (data.dueDate !== undefined) {
+    task.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+  }
+
+  if (data.checklist !== undefined) {
+    task.checklist = data.checklist;
+  }
+
   await task.save();
+
+  if (data.status !== undefined && data.status !== previousStatus) {
+    await logActivity(task._id.toString(), userId, "STATUS_CHANGED", {
+      oldValue: previousStatus,
+      newValue: task.status,
+    });
+  }
+
+  if (
+    (data.title !== undefined && data.title !== previousTitle) ||
+    (data.description !== undefined && data.description !== previousDescription)
+  ) {
+    await logActivity(task._id.toString(), userId, "DETAILS_UPDATED", {
+      oldValue: previousTitle,
+      newValue: task.title,
+    });
+  }
 
   return Task.findById(task._id)
     .populate(
@@ -158,13 +199,17 @@ export const assignTask = async (
     );
   }
 
-  const isAdmin =
-    userRole === USER_ROLES.ADMIN;
+  const isAdmin = userRole === USER_ROLES.ADMIN;
+  const assigneeDisplayName = `${assignedUser.firstName} ${assignedUser.lastName}`.trim() || assignedUser.username;
 
   if (isAdmin) {
     task.assignedUser = assignedUser._id;
 
     await task.save();
+
+    await logActivity(task._id.toString(), userId, "TASK_ASSIGNED", {
+      assignedToName: assigneeDisplayName,
+    });
 
     return Task.findById(task._id)
       .populate(
@@ -202,6 +247,10 @@ export const assignTask = async (
   task.assignedUser = assignedUser._id;
 
   await task.save();
+
+  await logActivity(task._id.toString(), userId, "TASK_ASSIGNED", {
+    assignedToName: assigneeDisplayName,
+  });
 
   return Task.findById(task._id)
     .populate(

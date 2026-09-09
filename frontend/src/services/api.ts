@@ -28,6 +28,11 @@ api.interceptors.request.use(
         `Bearer ${accessToken}`;
     }
 
+    // Allow browser/Axios to set multipart/form-data with boundary when data is FormData
+    if (typeof window !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
     return config;
   },
   (error) => {

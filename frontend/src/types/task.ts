@@ -1,4 +1,5 @@
 import type { User } from "./user";
+import type { PaginationMeta } from "./pagination";
 
 export type TaskStatus = "TODO" | "DOING" | "DONE";
 
@@ -10,16 +11,27 @@ export interface TaskUser {
   email: string;
 }
 
+export interface TaskLabel {
+  name: string;
+  color: string;
+}
+
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface Task {
   _id: string;
   title: string;
   description: string;
   status: TaskStatus;
-
   creator: TaskUser | null;
-
   assignedUser: TaskUser | null;
-
+  labels?: TaskLabel[];
+  dueDate?: string | null;
+  checklist?: TaskChecklistItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -27,19 +39,23 @@ export interface Task {
 export interface CreateTaskData {
   title: string;
   description: string;
+  labels?: TaskLabel[];
+  dueDate?: string | null;
+  checklist?: TaskChecklistItem[];
 }
 
 export interface UpdateTaskData {
   title?: string;
   description?: string;
   status?: TaskStatus;
+  labels?: TaskLabel[];
+  dueDate?: string | null;
+  checklist?: TaskChecklistItem[];
 }
 
 export interface AssignTaskData {
   assignedUserId: string;
 }
-
-import type { PaginationMeta } from "./pagination";
 
 export interface TasksResponse {
   success: boolean;
