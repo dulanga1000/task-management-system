@@ -1,27 +1,41 @@
 import User, { type IUser } from "../models/User.js";
+import RefreshToken from "../models/RefreshToken.js";
 import Task from "../models/Task.js";
 import { USER_ROLES } from "../constants/roles.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
-import {
-  parsePaginationParams,
-  buildPaginationMeta,
-} from "../utils/pagination.js";
-import type {
-  PaginationParams,
-  PaginationMeta,
-} from "../types/pagination.js";
-import type {
-  UpdateUserInput,
-  UpdateProfileInput,
-  ChangePasswordInput,
-} from "../validations/user.validation.js";
+import { parsePaginationParams, buildPaginationMeta } from "../utils/pagination.js";
+import type { PaginationParams, PaginationMeta } from "../types/pagination.js";
+import type { UpdateUserInput, UpdateProfileInput, ChangePasswordInput } from "../validations/user.validation.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
+import { uploadToStorage, deleteFromStorage, generateProfilePictureKey, getPresignedFileUrl } from "../utils/storage.js";
 
 export interface GetUsersResult {
   users: Omit<IUser, "password">[];
   pagination: PaginationMeta;
 }
+
+// Helper to populate user's profile picture with a short-lived presigned URL
+export const populateProfilePictureUrl = async (userDoc: any) => {
+  if (!userDoc) return null;
+  const user = typeof userDoc.toObject === "function" ? userDoc.toObject() : { ...userDoc };
+
+  if (user.profilePicture?.storageKey) {
+    try {
+      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      user.profilePicture = {
+        ...user.profilePicture,
+        url,
+      };
+    } catch (err) {
+      console.error("Failed to generate presigned URL for user profile picture:", err);
+    }
+  } else {
+    user.profilePicture = null;
+  }
+
+  return user;
+};
 
 // Get all users with server-side pagination
 export const getUsers = async (
@@ -29,7 +43,7 @@ export const getUsers = async (
 ): Promise<GetUsersResult> => {
   const { page, limit, skip } = parsePaginationParams(params);
 
-  const [users, totalItems] = await Promise.all([
+  const [rawUsers, totalItems] = await Promise.all([
     User.find()
       .select("-password")
       .sort({ createdAt: -1 })
@@ -39,6 +53,7 @@ export const getUsers = async (
     User.countDocuments(),
   ]);
 
+  const users = await Promise.all(rawUsers.map((u) => populateProfilePictureUrl(u)));
   const pagination = buildPaginationMeta(totalItems, page, limit);
 
   return {
@@ -51,7 +66,8 @@ export const getUsers = async (
 export const getUserById = async (userId: string) => {
   validateObjectId(userId, "user ID");
 
-  return User.findById(userId).select("-password").lean();
+  const user = await User.findById(userId).select("-password").lean();
+  return populateProfilePictureUrl(user);
 };
 
 // Update a normal user's details (Admin only)
@@ -119,7 +135,8 @@ export const updateUser = async (
 
   await user.save();
 
-  return User.findById(userId).select("-password").lean();
+  const updated = await User.findById(userId).select("-password").lean();
+  return populateProfilePictureUrl(updated);
 };
 
 // Delete a normal user account and unassign their tasks (Admin only)
@@ -143,6 +160,15 @@ export const deleteUser = async (
   // Prevent deleting another Administrator
   if (user.role === USER_ROLES.ADMIN) {
     throw new AppError("You cannot delete an administrator", 403);
+  }
+
+  // Delete profile picture from Supabase if exists
+  if (user.profilePicture?.storageKey) {
+    try {
+      await deleteFromStorage(user.profilePicture.storageKey);
+    } catch (cleanupError) {
+      console.warn("Failed to delete user profile picture from storage:", cleanupError);
+    }
   }
 
   // Unassign all tasks assigned to this user without deleting the tasks
@@ -214,7 +240,8 @@ export const updateProfile = async (
 
   await user.save();
 
-  return User.findById(userId).select("-password").lean();
+  const updated = await User.findById(userId).select("-password").lean();
+  return populateProfilePictureUrl(updated);
 };
 
 // Change own password
@@ -237,14 +264,109 @@ export const changePassword = async (
     throw new AppError("Current password is incorrect", 400);
   }
 
-  // Verify new password !== confirmPassword (defense in depth)
-  if (data.newPassword !== data.confirmPassword) {
-    throw new AppError("New passwords do not match", 400);
+  // Ensure new password is not the same as current password
+  const isSame = await comparePassword(data.newPassword, user.password);
+  if (isSame) {
+    throw new AppError(
+      "New password cannot be the same as the current password",
+      400
+    );
   }
 
   // Hash new password and save
   user.password = await hashPassword(data.newPassword);
   await user.save();
 
+  // Revoke all active refresh token sessions for this user across all devices
+  await RefreshToken.updateMany(
+    {
+      user: user._id,
+      revokedAt: null,
+    },
+    {
+      revokedAt: new Date(),
+    }
+  );
+
   return { message: "Password changed successfully" };
+};
+
+// Upload or replace authenticated user's profile picture
+export const uploadUserProfilePicture = async (
+  userId: string,
+  file: Express.Multer.File
+) => {
+  validateObjectId(userId, "user ID");
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const oldStorageKey = user.profilePicture?.storageKey;
+  const storageKey = generateProfilePictureKey(userId, file.originalname);
+  const mimeType = file.mimetype.toLowerCase();
+
+  // 1. Upload new image to Supabase Storage
+  await uploadToStorage(storageKey, file.buffer, mimeType);
+
+  // 2. Update user profilePicture in MongoDB with compensating rollback
+  user.profilePicture = {
+    storageKey,
+    mimeType,
+    size: file.size,
+    updatedAt: new Date(),
+  };
+
+  try {
+    await user.save();
+  } catch (dbError) {
+    // Compensating rollback: delete uploaded object from storage
+    try {
+      await deleteFromStorage(storageKey);
+    } catch (cleanupError) {
+      console.error("Rollback cleanup error:", cleanupError);
+    }
+    throw dbError;
+  }
+
+  // 3. Delete old object from Supabase if replacement
+  if (oldStorageKey) {
+    try {
+      await deleteFromStorage(oldStorageKey);
+    } catch (cleanupError) {
+      console.warn("Failed to delete old profile picture from storage:", cleanupError);
+    }
+  }
+
+  // 4. Return populated user with presigned URL
+  const updated = await User.findById(userId).select("-password").lean();
+  return populateProfilePictureUrl(updated);
+};
+
+// Delete authenticated user's profile picture
+export const deleteUserProfilePicture = async (userId: string) => {
+  validateObjectId(userId, "user ID");
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (!user.profilePicture?.storageKey) {
+    throw new AppError("Profile picture not found", 404);
+  }
+
+  const storageKey = user.profilePicture.storageKey;
+
+  // 1. Delete object from Supabase Storage
+  await deleteFromStorage(storageKey);
+
+  // 2. Clear profilePicture in MongoDB
+  user.profilePicture = null;
+  await user.save();
+
+  // 3. Return updated user
+  const updated = await User.findById(userId).select("-password").lean();
+  return populateProfilePictureUrl(updated);
 };

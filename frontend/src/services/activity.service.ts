@@ -1,9 +1,5 @@
 import api from "./api";
-import type {
-  TaskActivity,
-  ActivitiesResponse,
-  AddCommentResponse,
-} from "@/types/activity";
+import type {TaskActivity,ActivitiesResponse,AddCommentResponse} from "@/types/activity";
 
 export const getTaskActivities = async (
   taskId: string

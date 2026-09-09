@@ -1,9 +1,5 @@
 import { AppError } from "./app-error.js";
-import type {
-  PaginationParams,
-  ParsedPagination,
-  PaginationMeta,
-} from "../types/pagination.js";
+import type { PaginationParams, ParsedPagination, PaginationMeta } from "../types/pagination.js";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -43,9 +39,7 @@ export const parsePaginationParams = (
   return { page, limit, skip };
 };
 
-/**
- * Calculates pagination metadata from total count and parsed parameters.
- */
+// Calculates pagination metadata from total count and parsed parameters.
 export const buildPaginationMeta = (
   totalItems: number,
   page: number,

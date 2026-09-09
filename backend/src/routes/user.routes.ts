@@ -1,24 +1,11 @@
 import { Router } from "express";
-
-import {
-  getAll,
-  getById,
-  update,
-  remove,
-  updateMe,
-  changePassword,
-} from "../controllers/user.controller.js";
-
+import { getAll, getById, update, remove, updateMe, changePassword, uploadProfilePic, deleteProfilePic } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-
+import { uploadProfilePictureFile } from "../middleware/upload.middleware.js";
 import { USER_ROLES } from "../constants/roles.js";
-import {
-  updateUserSchema,
-  updateProfileSchema,
-  changePasswordSchema,
-} from "../validations/user.validation.js";
+import { updateUserSchema, updateProfileSchema, changePasswordSchema } from "../validations/user.validation.js";
 
 const router = Router();
 
@@ -36,6 +23,21 @@ router.patch(
   authenticate,
   validate(changePasswordSchema),
   changePassword
+);
+
+// Upload or replace own profile picture (Any authenticated user: USER or ADMIN)
+router.post(
+  "/me/profile-picture",
+  authenticate,
+  uploadProfilePictureFile,
+  uploadProfilePic
+);
+
+// Delete own profile picture (Any authenticated user: USER or ADMIN)
+router.delete(
+  "/me/profile-picture",
+  authenticate,
+  deleteProfilePic
 );
 
 // Get all users (Admin only)

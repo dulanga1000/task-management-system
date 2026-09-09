@@ -1,9 +1,5 @@
 import api from "./api";
-import type {
-  Attachment,
-  AttachmentsResponse,
-  AttachmentResponse,
-} from "@/types/attachment";
+import type {Attachment,AttachmentsResponse,AttachmentResponse} from "@/types/attachment";
 
 export const getTaskAttachments = async (
   taskId: string

@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Attachment } from "@/types/attachment";
-import {
-  getTaskAttachments,
-  uploadTaskAttachment,
-  deleteTaskAttachment,
-} from "@/services/attachment.service";
+import {getTaskAttachments,uploadTaskAttachment,deleteTaskAttachment} from "@/services/attachment.service";
 import { AttachmentUpload } from "./AttachmentUpload";
 import { AttachmentItem } from "./AttachmentItem";
 import { Paperclip, Image as ImageIcon, FileText, X } from "lucide-react";

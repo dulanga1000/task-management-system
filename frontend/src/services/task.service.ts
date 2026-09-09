@@ -1,12 +1,6 @@
 import api from "./api";
 
-import type {
-  AssignTaskData,
-  CreateTaskData,
-  TaskResponse,
-  TasksResponse,
-  UpdateTaskData,
-} from "@/types/task";
+import type {AssignTaskData,CreateTaskData,TaskResponse,TasksResponse,UpdateTaskData} from "@/types/task";
 import type { PaginationParams } from "@/types/pagination";
 
 export const getTasks = async (params?: PaginationParams) => {
@@ -63,6 +57,17 @@ export const assignTask = async (
   const response = await api.patch<TaskResponse>(
     `/tasks/${taskId}/assignment`,
     data
+  );
+
+  return response.data;
+};
+
+export const reorderTasks = async (
+  items: { taskId: string; order: number }[]
+) => {
+  const response = await api.patch<{ success: boolean; message: string }>(
+    "/tasks/reorder",
+    { items }
   );
 
   return response.data;

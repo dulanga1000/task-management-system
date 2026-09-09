@@ -1,13 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import {
-  uploadAttachment,
-  getTaskAttachments,
-  deleteTaskAttachment,
-} from "../services/attachment.service.js";
+import { uploadAttachment, getTaskAttachments, deleteTaskAttachment } from "../services/attachment.service.js";
 
-/**
- * Upload an attachment to a task
- */
+// Upload an attachment to a task
+
 export const upload = async (
   req: Request,
   res: Response,
@@ -36,9 +31,8 @@ export const upload = async (
   }
 };
 
-/**
- * Get all attachments for a task
- */
+//Get all attachments for a task
+
 export const getByTask = async (
   req: Request,
   res: Response,
@@ -60,9 +54,7 @@ export const getByTask = async (
   }
 };
 
-/**
- * Delete an attachment from a task
- */
+// Delete an attachment from a task
 export const remove = async (
   req: Request,
   res: Response,

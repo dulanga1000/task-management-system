@@ -1,29 +1,12 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-
-import {
-  getCurrentUser,
-  loginUser,
-  logoutUser,
-  refreshAccessToken,
-  registerUser,
-} from "@/services/auth.service";
-
+import {createContext,useContext,useEffect,useState,useCallback, type ReactNode} from "react";
+import {getCurrentUser,loginUser,logoutUser,refreshAccessToken,registerUser} from "@/services/auth.service";
 import { setApiAccessToken } from "@/services/api";
-
-import type {
-  LoginData,
-  RegisterData,
-} from "@/types/auth";
-
+import type {LoginData,RegisterData} from "@/types/auth";
 import type { User } from "@/types/user";
+import { useIdleLogout } from "@/hooks/useIdleLogout";
+import { IdleWarningModal } from "@/components/auth/IdleWarningModal";
 
 interface AuthContextType {
   user: User | null;
@@ -39,7 +22,9 @@ interface AuthContextType {
     data: RegisterData
   ) => Promise<void>;
 
-  logout: () => Promise<void>;
+  logout: (
+    reason?: "manual" | "idle" | "password_changed"
+  ) => Promise<void>;
 
   updateUser: (updatedUser: User) => void;
 }
@@ -102,9 +87,7 @@ export function AuthProvider({
   const isAuthenticated =
     !!user && !!accessToken;
 
-  // --------------------------------------------------
   // RESTORE SESSION
-  // --------------------------------------------------
 
   useEffect(() => {
     let mounted = true;
@@ -115,10 +98,8 @@ export function AuthProvider({
           "[Auth] Restoring session..."
         );
 
-        /*
-         * Only ONE refresh request can happen at
-         * a time.
-         */
+        // Only ONE refresh request can happen at a time.
+        
         const token =
           await restoreSessionOnce();
 
@@ -132,10 +113,8 @@ export function AuthProvider({
           "[Auth] Access token restored"
         );
 
-        /*
-         * Now that Axios has the access token,
-         * request the current user.
-         */
+        // Now that Axios has the access token,request the current user.
+
         const userResponse =
           await getCurrentUser();
 
@@ -179,9 +158,7 @@ export function AuthProvider({
     };
   }, []);
 
-  // --------------------------------------------------
   // LOGIN
-  // --------------------------------------------------
 
   const login = async (
     data: LoginData
@@ -194,16 +171,15 @@ export function AuthProvider({
       accessToken,
     } = response.data;
 
-    /*
-     * Set Axios token immediately.
-     */
+
+    // Set Axios token immediately.
+
     setApiAccessToken(
       accessToken
     );
 
-    /*
-     * Update React state.
-     */
+    // Update React state.
+
     setAccessToken(
       accessToken
     );
@@ -213,9 +189,7 @@ export function AuthProvider({
     return user;
   };
 
-  // --------------------------------------------------
   // REGISTER
-  // --------------------------------------------------
 
   const register = async (
     data: RegisterData
@@ -223,28 +197,52 @@ export function AuthProvider({
     await registerUser(data);
   };
 
-  // --------------------------------------------------
   // LOGOUT
-  // --------------------------------------------------
 
-  const logout = async (): Promise<void> => {
-    try {
-      await logoutUser();
-    } finally {
-      /*
-       * Clear everything from memory.
-       */
-      setUser(null);
+  const logout = useCallback(
+    async (
+      reason: "manual" | "idle" | "password_changed" = "manual"
+    ): Promise<void> => {
+      try {
+        if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+          try {
+            const channel = new BroadcastChannel("taskflow_auth_session");
+            channel.postMessage({ type: "AUTH_LOGOUT", reason });
+            channel.close();
+          } catch {
+            // ignore channel errors
+          }
+        }
+        await logoutUser();
+      } catch (error) {
+        console.warn("[Auth] Backend logout request failed:", error);
+      } finally {
+        // Clear everything from memory.
+        setUser(null);
 
-      setAccessToken(null);
+        setAccessToken(null);
 
-      setApiAccessToken(null);
-    }
-  };
+        setApiAccessToken(null);
+      }
+    },
+    []
+  );
 
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
   };
+
+  // IDLE SESSION MONITORING & MODAL
+
+  const {
+    showWarning,
+    secondsRemaining,
+    staySignedIn,
+    signOutNow,
+  } = useIdleLogout({
+    isAuthenticated,
+    logout,
+  });
 
 
   return (
@@ -261,13 +259,18 @@ export function AuthProvider({
       }}
     >
       {children}
+      {showWarning && (
+        <IdleWarningModal
+          secondsRemaining={secondsRemaining}
+          onStaySignedIn={staySignedIn}
+          onSignOut={signOutNow}
+        />
+      )}
     </AuthContext.Provider>
   );
 }
 
-// --------------------------------------------------
 // USE AUTH CONTEXT
-// --------------------------------------------------
 
 export function useAuthContext() {
   const context =

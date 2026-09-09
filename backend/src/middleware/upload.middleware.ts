@@ -22,9 +22,9 @@ const ALLOWED_EXTENSIONS = new Set([
   ".pdf",
 ]);
 
-/**
- * Verify file magic bytes / signature against declared MIME type
- */
+
+// Verify file magic bytes / signature against declared MIME type
+
 export const verifyFileMagicBytes = (
   buffer: Buffer,
   mimeType: string
@@ -110,9 +110,8 @@ const multerUpload = multer({
   },
 });
 
-/**
- * Express middleware wrapper for file upload with strict magic byte and size enforcement
- */
+// Express middleware wrapper for file upload with strict magic byte and size enforcement
+
 export const uploadAttachmentFile = (
   req: Request,
   res: Response,
@@ -164,3 +163,98 @@ export const uploadAttachmentFile = (
     next();
   });
 };
+
+const ALLOWED_PROFILE_IMAGE_MIMES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+const ALLOWED_PROFILE_IMAGE_EXTS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+]);
+
+/**
+ * Handles profile picture uploads.
+ * Only allows JPG, PNG, and WEBP images up to 5 MB,
+ * and validates the file signature to make sure it's a real image.
+ */
+
+export const uploadProfilePictureFile = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const upload = multer({
+    storage,
+    limits: {
+      fileSize: MAX_IMAGE_SIZE,
+      files: 1,
+    },
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const mime = file.mimetype.toLowerCase();
+
+      if (!ALLOWED_PROFILE_IMAGE_EXTS.has(ext)) {
+        return cb(
+          new AppError(
+            `Unsupported file extension: ${ext}. Allowed image formats: JPG, PNG, WEBP`,
+            400
+          )
+        );
+      }
+
+      if (!ALLOWED_PROFILE_IMAGE_MIMES.has(mime)) {
+        return cb(
+          new AppError(
+            `Unsupported image type: ${mime}. Allowed: image/jpeg, image/png, image/webp`,
+            400
+          )
+        );
+      }
+
+      cb(null, true);
+    },
+  }).single("file");
+
+  upload(req, res, (err: unknown) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return next(new AppError("Profile picture must not exceed 5 MB", 400));
+        }
+        return next(new AppError(`File upload error: ${err.message}`, 400));
+      }
+      return next(err);
+    }
+
+    if (!req.file) {
+      return next(new AppError("Profile picture file is required", 400));
+    }
+
+    const file = req.file;
+    const mime = file.mimetype.toLowerCase();
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      return next(new AppError("Profile picture must not exceed 5 MB", 400));
+    }
+
+    // Verify magic bytes
+    const isValidSignature = verifyFileMagicBytes(file.buffer, mime);
+    if (!isValidSignature) {
+      return next(
+        new AppError(
+          "File content does not match declared image type. Invalid file signature.",
+          400
+        )
+      );
+    }
+
+    next();
+  });
+};
+

@@ -76,37 +76,30 @@ export const updateProfileSchema = z
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 // Schema for changing password by any authenticated user
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z
-      .string({ error: "Current password is required" })
-      .min(1, { error: "Current password is required" }),
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string({ error: "Current password is required" })
+    .min(1, { error: "Current password is required" }),
 
-    newPassword: z
-      .string({ error: "New password is required" })
-      .min(8, { error: "Password must be at least 8 characters" })
-      .max(100, { error: "Password must be at most 100 characters" })
-      .regex(/[A-Z]/, {
-        error: "Password must contain at least one uppercase letter",
-      })
-      .regex(/[a-z]/, {
-        error: "Password must contain at least one lowercase letter",
-      })
-      .regex(/[0-9]/, {
-        error: "Password must contain at least one number",
-      })
-      .regex(/[^A-Za-z0-9]/, {
-        error: "Password must contain at least one special character",
-      }),
+  newPassword: z
+    .string({ error: "New password is required" })
+    .min(8, { error: "Password must be at least 8 characters" })
+    .max(100, { error: "Password must be at most 100 characters" })
+    .regex(/[A-Z]/, {
+      error: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      error: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, {
+      error: "Password must contain at least one number",
+    })
+    .regex(/[^A-Za-z0-9]/, {
+      error: "Password must contain at least one special character",
+    }),
 
-    confirmPassword: z
-      .string({ error: "Confirm password is required" })
-      .min(1, { error: "Confirm password is required" }),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "New passwords do not match",
-    path: ["confirmPassword"],
-  });
+  confirmPassword: z.string().optional(),
+});
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
 import { ProfileInformationForm } from "@/components/profile/ProfileInformationForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
+import { ProfilePictureManager } from "@/components/profile/ProfilePictureManager";
 
 export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
@@ -86,28 +87,13 @@ export default function ProfilePage() {
         </div>
 
         {/* User Summary Card */}
-        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-xl font-bold text-white shadow-md shadow-blue-500/20 shrink-0">
-              {initials}
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-lg font-bold text-gray-900">
-                  {user.firstName} {user.lastName}
-                </h2>
-                <span className="text-xs font-medium text-gray-400">
-                  @{user.username}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
-              {formattedDate && (
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Member since {formattedDate}
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+          <ProfilePictureManager user={user} onUpdateUser={updateUser} />
+          {formattedDate && (
+            <p className="text-[11px] text-gray-400 mt-4 pt-3 border-t border-gray-100">
+              Member since {formattedDate}
+            </p>
+          )}
         </div>
 
         {/* Section 1: Personal Information Form */}

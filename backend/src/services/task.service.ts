@@ -1,17 +1,13 @@
 import Task from "../models/Task.js";
 import User from "../models/User.js";
-import {USER_ROLES,type UserRole} from "../constants/roles.js";
-import type {CreateTaskInput,UpdateTaskInput,AssignTaskInput} from "../validations/task.validation.js";
+import Attachment from "../models/Attachment.js";
+import { getPresignedFileUrl } from "../utils/storage.js";
+import { USER_ROLES, type UserRole } from "../constants/roles.js";
+import type { CreateTaskInput, UpdateTaskInput, AssignTaskInput } from "../validations/task.validation.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
-import {
-  parsePaginationParams,
-  buildPaginationMeta,
-} from "../utils/pagination.js";
-import type {
-  PaginationParams,
-  PaginationMeta,
-} from "../types/pagination.js";
+import { parsePaginationParams, buildPaginationMeta } from "../utils/pagination.js";
+import type { PaginationParams, PaginationMeta } from "../types/pagination.js";
 import { logActivity } from "./activity.service.js";
 
 // Create a new task
@@ -33,7 +29,7 @@ export const createTask = async (
     newValue: task.status,
   });
 
-  return task;
+  return getTaskById(task._id.toString());
 };
 
 export interface GetTasksResult {
@@ -41,13 +37,12 @@ export interface GetTasksResult {
   pagination: PaginationMeta;
 }
 
-// Get all tasks with server-side pagination
 export const getTasks = async (
   params: PaginationParams = {}
 ): Promise<GetTasksResult> => {
   const { page, limit, skip } = parsePaginationParams(params);
 
-  const [tasks, totalItems] = await Promise.all([
+  const [rawTasks, totalItems] = await Promise.all([
     Task.find()
       .populate(
         "creator",
@@ -57,12 +52,42 @@ export const getTasks = async (
         "assignedUser",
         "firstName lastName username email"
       )
-      .sort({ createdAt: -1 })
+      .sort({ order: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
     Task.countDocuments(),
   ]);
+
+  const taskIds = rawTasks.map((t) => t._id);
+  const attachments = await Attachment.find({ task: { $in: taskIds } })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const tasks = await Promise.all(
+    rawTasks.map(async (task) => {
+      const taskAttachments = attachments.filter(
+        (a) => a.task.toString() === task._id.toString()
+      );
+      const attachmentCount = taskAttachments.length;
+      const firstImage = taskAttachments.find((a) => a.type === "IMAGE");
+      let coverImageUrl: string | null = null;
+
+      if (firstImage?.storageKey) {
+        try {
+          coverImageUrl = await getPresignedFileUrl(firstImage.storageKey, 3600);
+        } catch (err) {
+          console.warn("Failed to generate presigned URL for task cover image:", err);
+        }
+      }
+
+      return {
+        ...task,
+        attachmentCount,
+        coverImageUrl,
+      };
+    })
+  );
 
   const pagination = buildPaginationMeta(totalItems, page, limit);
 
@@ -76,7 +101,7 @@ export const getTasks = async (
 export const getTaskById = async (taskId: string) => {
   validateObjectId(taskId, "task ID");
 
-  return Task.findById(taskId)
+  const task = await Task.findById(taskId)
     .populate(
       "creator",
       "firstName lastName username email"
@@ -84,7 +109,31 @@ export const getTaskById = async (taskId: string) => {
     .populate(
       "assignedUser",
       "firstName lastName username email"
-    );
+    )
+    .lean();
+
+  if (!task) return null;
+
+  const taskAttachments = await Attachment.find({ task: taskId })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const attachmentCount = taskAttachments.length;
+  const firstImage = taskAttachments.find((a) => a.type === "IMAGE");
+  let coverImageUrl: string | null = null;
+  if (firstImage?.storageKey) {
+    try {
+      coverImageUrl = await getPresignedFileUrl(firstImage.storageKey, 3600);
+    } catch (err) {
+      console.warn("Failed to generate presigned URL for task cover image:", err);
+    }
+  }
+
+  return {
+    ...task,
+    attachmentCount,
+    coverImageUrl,
+  };
 };
 
 // Update a task
@@ -139,6 +188,10 @@ export const updateTask = async (
     task.checklist = data.checklist;
   }
 
+  if (data.order !== undefined) {
+    task.order = data.order;
+  }
+
   await task.save();
 
   if (data.status !== undefined && data.status !== previousStatus) {
@@ -158,15 +211,7 @@ export const updateTask = async (
     });
   }
 
-  return Task.findById(task._id)
-    .populate(
-      "creator",
-      "firstName lastName username email"
-    )
-    .populate(
-      "assignedUser",
-      "firstName lastName username email"
-    );
+  return getTaskById(task._id.toString());
 };
 
 // Assign a task
@@ -211,15 +256,7 @@ export const assignTask = async (
       assignedToName: assigneeDisplayName,
     });
 
-    return Task.findById(task._id)
-      .populate(
-        "creator",
-        "firstName lastName username email"
-      )
-      .populate(
-        "assignedUser",
-        "firstName lastName username email"
-      );
+    return getTaskById(task._id.toString());
   }
 
   if (data.assignedUserId !== userId) {
@@ -252,15 +289,7 @@ export const assignTask = async (
     assignedToName: assigneeDisplayName,
   });
 
-  return Task.findById(task._id)
-    .populate(
-      "creator",
-      "firstName lastName username email"
-    )
-    .populate(
-      "assignedUser",
-      "firstName lastName username email"
-    );
+  return getTaskById(task._id.toString());
 };
 
 // Delete a task
@@ -293,4 +322,31 @@ export const deleteTask = async (
   await Task.findByIdAndDelete(taskId);
 
   return task;
+};
+
+// Reorder tasks
+export const reorderTasks = async (
+  items: { taskId: string; order: number }[],
+  userId: string,
+  userRole: UserRole
+) => {
+  const isAdmin = userRole === USER_ROLES.ADMIN;
+
+  const bulkOps = items.map((item) => {
+    validateObjectId(item.taskId, "task ID");
+    const filter: Record<string, any> = { _id: item.taskId };
+    if (!isAdmin) {
+      filter.assignedUser = userId;
+    }
+    return {
+      updateOne: {
+        filter,
+        update: { $set: { order: item.order } },
+      },
+    };
+  });
+
+  if (bulkOps.length > 0) {
+    await Task.bulkWrite(bulkOps);
+  }
 };

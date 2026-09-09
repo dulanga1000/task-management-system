@@ -1,14 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Users,
-  CheckSquare,
-  Clock,
-  CheckCircle2,
-  TrendingUp,
-  UserX,
-} from "lucide-react";
+import {Users,CheckSquare,Clock,CheckCircle2,TrendingUp,UserX} from "lucide-react";
 import type { AdminStatsData } from "@/types/admin";
 import useAdminStats from "@/hooks/useAdminStats";
 import AdminStatWidget from "./AdminStatWidget";

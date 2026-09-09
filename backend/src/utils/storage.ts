@@ -1,10 +1,4 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-  CreateBucketCommand,
-} from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CreateBucketCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import path from "path";
 import crypto from "crypto";
@@ -57,11 +51,23 @@ export const generateStorageKey = (
   return `tasks/${taskId}/${subFolder}/${uniqueFileName}`;
 };
 
+/**
+ * Generate a secure collision-resistant storage key for user profile pictures following:
+ * profile-pictures/{userId}/profile-{uniqueId}.{ext}
+ */
+export const generateProfilePictureKey = (
+  userId: string,
+  originalName: string
+): string => {
+  const ext = path.extname(originalName).toLowerCase() || ".jpg";
+  const uniqueId = crypto.randomBytes(4).toString("hex");
+  return `profile-pictures/${userId}/profile-${uniqueId}${ext}`;
+};
+
 let bucketVerified = false;
 
-/**
- * Ensure target bucket exists in Supabase Storage
- */
+// Ensure target bucket exists in Supabase Storage
+
 export const ensureBucketExists = async (): Promise<void> => {
   if (bucketVerified) return;
   const client = getS3Client();
@@ -85,9 +91,8 @@ export const ensureBucketExists = async (): Promise<void> => {
   }
 };
 
-/**
- * Upload buffer directly to Supabase S3 storage
- */
+// Upload buffer directly to Supabase S3 storage
+
 export const uploadToStorage = async (
   storageKey: string,
   buffer: Buffer,
@@ -116,9 +121,7 @@ export const uploadToStorage = async (
   }
 };
 
-/**
- * Delete object from Supabase S3 storage
- */
+// Delete object from Supabase S3 storage
 export const deleteFromStorage = async (storageKey: string): Promise<void> => {
   const client = getS3Client();
   const command = new DeleteObjectCommand({
@@ -129,9 +132,7 @@ export const deleteFromStorage = async (storageKey: string): Promise<void> => {
   await client.send(command);
 };
 
-/**
- * Generate a short-lived presigned URL for viewing/downloading an attachment securely
- */
+// Generate a short-lived presigned URL for viewing/downloading an attachment securely
 export const getPresignedFileUrl = async (
   storageKey: string,
   expiresInSeconds: number = 3600

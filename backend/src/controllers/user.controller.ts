@@ -1,12 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import {
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  updateProfile,
-  changePassword as changeUserPassword,
-} from "../services/user.service.js";
+import { getUsers, getUserById, updateUser, deleteUser, updateProfile, changePassword as changeUserPassword, uploadUserProfilePicture, deleteUserProfilePicture } from "../services/user.service.js";
+import { getRefreshCookieOptions } from "./auth.controller.js";
 
 // Get all users with optional pagination
 export const getAll = async (
@@ -134,9 +128,64 @@ export const changePassword = async (
   try {
     const result = await changeUserPassword(req.user!.userId, req.body);
 
+    res.clearCookie("refreshToken", getRefreshCookieOptions());
+
     res.status(200).json({
       success: true,
       message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Upload or replace authenticated user's profile picture
+export const uploadProfilePic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: "Profile picture file is required",
+      });
+      return;
+    }
+
+    const updatedUser = await uploadUserProfilePicture(
+      req.user!.userId,
+      req.file
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture updated successfully",
+      data: {
+        user: updatedUser,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete authenticated user's profile picture
+export const deleteProfilePic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const updatedUser = await deleteUserProfilePicture(req.user!.userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture deleted successfully",
+      data: {
+        user: updatedUser,
+      },
     });
   } catch (error) {
     next(error);

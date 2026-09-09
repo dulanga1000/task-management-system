@@ -1,9 +1,5 @@
 import { Router } from "express";
-import {
-  upload,
-  getByTask,
-  remove,
-} from "../controllers/attachment.controller.js";
+import { upload, getByTask, remove } from "../controllers/attachment.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { uploadAttachmentFile } from "../middleware/upload.middleware.js";
 
