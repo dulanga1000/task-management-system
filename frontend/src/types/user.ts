@@ -10,3 +10,16 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface UpdateUserData {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}

@@ -6,7 +6,7 @@ import { ArrowRight, Inbox } from "lucide-react";
 import type { User } from "@/types/user";
 import type { Task } from "@/types/task";
 import type { PaginationMeta } from "@/types/pagination";
-import AdminUserRow from "./AdminUserRow";
+import UserRow from "./UserRow";
 import Pagination from "@/components/ui/Pagination";
 
 interface UserTableProps {
@@ -15,6 +15,9 @@ interface UserTableProps {
   pagination?: PaginationMeta | null;
   onPageChange?: (page: number) => void;
   onLimitChange?: (limit: number) => void;
+  onEditUser?: (user: User) => void;
+  onDeleteUser?: (user: User) => void;
+  currentUserId?: string;
   title?: string;
   subtitle?: string;
   showViewAllLink?: boolean;
@@ -27,12 +30,16 @@ export default function UserTable({
   pagination,
   onPageChange,
   onLimitChange,
+  onEditUser,
+  onDeleteUser,
+  currentUserId,
   title = "Registered Users",
   subtitle = "All accounts registered within this system workspace.",
   showViewAllLink = false,
   limit,
 }: UserTableProps) {
   const displayedUsers = limit ? users.slice(0, limit) : users;
+  const hasActions = !!(onEditUser || onDeleteUser);
 
   // Build task count lookup map by assigned user id
   const taskCountMap = React.useMemo(() => {
@@ -109,15 +116,23 @@ export default function UserTable({
                 <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
                   Joined Date
                 </th>
+                {hasActions && (
+                  <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
 
             <tbody className="divide-y divide-gray-100">
               {displayedUsers.map((u) => (
-                <AdminUserRow
+                <UserRow
                   key={u.id}
                   user={u}
                   assignedTasksCount={taskCountMap.get(u.id) || 0}
+                  currentUserId={currentUserId}
+                  onEdit={onEditUser}
+                  onDelete={onDeleteUser}
                 />
               ))}
             </tbody>

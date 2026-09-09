@@ -1,7 +1,19 @@
 import { z } from "zod";
 
-// Create task schema
+// Label item schema
+const labelSchema = z.object({
+  name: z.string().trim().min(1).max(50),
+  color: z.string().trim().min(1).max(50),
+});
 
+// Checklist item schema
+const checklistItemSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().trim().min(1).max(500),
+  completed: z.boolean(),
+});
+
+// Create task schema
 export const createTaskSchema = z.object({
   title: z
     .string({ error: "Title is required" })
@@ -16,15 +28,18 @@ export const createTaskSchema = z.object({
   description: z
     .string({ error: "Description is required" })
     .trim()
-    .max(2000, {
-      error: "Description must be at most 2000 characters",
+    .max(50000, {
+      error: "Description must be at most 50000 characters",
     }),
+
+  labels: z.array(labelSchema).optional(),
+  dueDate: z.string().datetime().nullable().optional(),
+  checklist: z.array(checklistItemSchema).optional(),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
 // Update task schema
-
 export const updateTaskSchema = z.object({
   title: z
     .string()
@@ -40,8 +55,8 @@ export const updateTaskSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(2000, {
-      error: "Description must be at most 2000 characters",
+    .max(50000, {
+      error: "Description must be at most 50000 characters",
     })
     .optional(),
 
@@ -50,6 +65,10 @@ export const updateTaskSchema = z.object({
       error: "Invalid task status",
     })
     .optional(),
+
+  labels: z.array(labelSchema).optional(),
+  dueDate: z.string().datetime().nullable().optional(),
+  checklist: z.array(checklistItemSchema).optional(),
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;

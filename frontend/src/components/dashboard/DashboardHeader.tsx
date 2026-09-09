@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import { Plus, LogOut, ChevronDown, User as UserIcon } from "lucide-react";
+import { Plus, LogOut, ChevronDown, User as UserIcon, ShieldCheck } from "lucide-react";
 
 interface DashboardHeaderProps {
   onCreateTask: () => void;
@@ -43,6 +44,17 @@ export default function DashboardHeader({
 
         {/* Right side */}
         <div className="relative flex items-center gap-4">
+          {/* Back to Admin Dashboard for ADMIN users */}
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="hidden h-10 items-center gap-2 rounded-xl border border-purple-200 bg-purple-50/90 px-3.5 text-xs font-bold text-purple-700 shadow-xs transition-all hover:bg-purple-100 hover:border-purple-300 sm:flex"
+            >
+              <ShieldCheck className="h-4 w-4 text-purple-600" />
+              <span>Admin Dashboard</span>
+            </Link>
+          )}
+
           {/* Create task */}
           <button
             type="button"
@@ -83,7 +95,27 @@ export default function DashboardHeader({
                   </span>
                 </div>
 
-                <div className="mt-2">
+                <div className="mt-2 space-y-1">
+                  {user?.role === "ADMIN" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setShowMenu(false)}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-purple-700 bg-purple-50/80 hover:bg-purple-100 transition-colors"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-purple-600" />
+                      Admin Dashboard
+                    </Link>
+                  )}
+
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowMenu(false)}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                  >
+                    <UserIcon className="h-4 w-4 text-gray-500" />
+                    Profile & Settings
+                  </Link>
+
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -99,8 +131,18 @@ export default function DashboardHeader({
         </div>
       </div>
 
-      {/* Mobile create button */}
-      <div className="border-t border-gray-100/50 px-6 py-3 sm:hidden">
+      {/* Mobile create and admin return buttons */}
+      <div className="border-t border-gray-100/50 px-6 py-3 space-y-2 sm:hidden">
+        {user?.role === "ADMIN" && (
+          <Link
+            href="/admin"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 text-sm font-semibold text-purple-700 transition-all hover:bg-purple-100 active:scale-95"
+          >
+            <ShieldCheck className="h-4 w-4 text-purple-600" />
+            Back to Admin Dashboard
+          </Link>
+        )}
+
         <button
           type="button"
           onClick={onCreateTask}

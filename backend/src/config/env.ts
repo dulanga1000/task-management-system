@@ -41,4 +41,12 @@ export const env = {
     email: process.env.ADMIN_EMAIL as string,
     password: process.env.ADMIN_PASSWORD as string,
   },
-};
+
+  supabase: {
+    s3Endpoint: process.env.SUPABASE_S3_ENDPOINT || "",
+    s3Region: process.env.SUPABASE_S3_REGION || "us-east-1",
+    s3AccessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID || "",
+    s3SecretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY || "",
+    s3Bucket: process.env.SUPABASE_S3_BUCKET || "task-attachments",
+  },
+};

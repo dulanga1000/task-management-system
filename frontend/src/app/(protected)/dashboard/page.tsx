@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 
 import useAuth from "@/hooks/useAuth";
 import useTasks from "@/hooks/useTasks";
@@ -129,17 +131,34 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-[1600px] px-6 py-8 lg:px-8">
 
         {/* Workspace */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-foreground">
-              Task Board
-            </h2>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Task Board
+              </h2>
+              {user?.role === "ADMIN" && (
+                <span className="inline-flex items-center rounded-md bg-purple-50 px-2.5 py-0.5 text-xs font-bold text-purple-700 ring-1 ring-inset ring-purple-600/20">
+                  ADMIN VIEW
+                </span>
+              )}
+            </div>
             <p className="text-sm font-medium text-muted">
               {user?.role === "ADMIN"
-                ? "Administrator workspace"
+                ? "Administrator workspace — viewing all tasks in interactive board mode"
                 : "Personal workspace"}
             </p>
           </div>
+
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-purple-200 bg-purple-50/80 px-4 py-2 text-xs font-bold text-purple-700 shadow-xs hover:bg-purple-100 hover:border-purple-300 transition-all"
+            >
+              <ShieldCheck className="h-4 w-4 text-purple-600" />
+              <span>Back to Admin Dashboard</span>
+            </Link>
+          )}
         </div>
 
         {/* Error */}
