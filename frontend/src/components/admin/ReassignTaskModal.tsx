@@ -30,6 +30,9 @@ export default function ReassignTaskModal({
 
   const currentAssignee = task.assignedUser;
 
+  // Only standard USER accounts can be assigned/reassigned tasks
+  const eligibleUsers = users.filter((u) => u.role === "USER");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -123,10 +126,10 @@ export default function ReassignTaskModal({
               onChange={(e) => setSelectedUserId(e.target.value)}
               className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-medium text-gray-800 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
             >
-              <option value="">-- Choose a user --</option>
-              {users.map((u) => (
+              <option value="">-- Choose a team member --</option>
+              {eligibleUsers.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.firstName} {u.lastName} ({u.email}) - {u.role}
+                  {u.firstName} {u.lastName} ({u.email})
                 </option>
               ))}
             </select>

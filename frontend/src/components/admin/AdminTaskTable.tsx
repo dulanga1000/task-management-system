@@ -14,6 +14,7 @@ import Pagination from "@/components/ui/Pagination";
 interface AdminTaskTableProps {
   tasks: Task[];
   users: User[];
+  onEditTask?: (task: Task) => void;
   onReassignTask: (taskId: string, userId: string) => Promise<void>;
   onUpdateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   onDeleteTask: (taskId: string) => Promise<void>;
@@ -29,6 +30,7 @@ interface AdminTaskTableProps {
 export default function AdminTaskTable({
   tasks,
   users,
+  onEditTask,
   onReassignTask,
   onUpdateTaskStatus,
   onDeleteTask,
@@ -119,6 +121,7 @@ export default function AdminTaskTable({
                 <AdminTaskRow
                   key={task._id}
                   task={task}
+                  onEdit={onEditTask}
                   onReassign={(t) => setReassigningTask(t)}
                   onStatusChange={onUpdateTaskStatus}
                   onDelete={(t) => setDeletingTask(t)}

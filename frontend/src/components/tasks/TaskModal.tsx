@@ -18,16 +18,16 @@ interface TaskModalProps {
     data: CreateTaskData
   ) => Promise<unknown>;
 
-  onUpdate: (
+  onUpdate?: (
     taskId: string,
     data: UpdateTaskData
   ) => Promise<unknown>;
 
-  onDelete: (
+  onDelete?: (
     taskId: string
   ) => Promise<unknown>;
 
-  onAssign: (
+  onAssign?: (
     taskId: string
   ) => Promise<unknown>;
 
@@ -89,11 +89,13 @@ export default function TaskModal({
       setError("");
 
       if (isEditing && task) {
-        await onUpdate(task._id, {
-          title,
-          description,
-          status,
-        });
+        if (onUpdate) {
+          await onUpdate(task._id, {
+            title,
+            description,
+            status,
+          });
+        }
       } else {
         await onCreate({
           title,
@@ -113,7 +115,7 @@ export default function TaskModal({
   };
 
   const handleDelete = async () => {
-    if (!task) return;
+    if (!task || !onDelete) return;
 
     const confirmed = window.confirm(
       "Are you sure you want to delete this task?"
@@ -139,7 +141,7 @@ export default function TaskModal({
   };
 
   const handleAssign = async () => {
-    if (!task) return;
+    if (!task || !onAssign) return;
 
     try {
       setAssigning(true);
@@ -370,7 +372,7 @@ export default function TaskModal({
 
           {/* Actions */}
           <div className="flex items-center justify-between border-t border-gray-100 pt-5">
-            {isEditing ? (
+            {isEditing && onDelete ? (
               <button
                 type="button"
                 onClick={handleDelete}

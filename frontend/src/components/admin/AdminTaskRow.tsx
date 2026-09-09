@@ -5,6 +5,7 @@ import {
   Clock,
   User as UserIcon,
   UserCheck,
+  Pencil,
   Trash2,
   MoreVertical,
   Circle,
@@ -14,6 +15,7 @@ import type { Task, TaskStatus } from "@/types/task";
 
 interface AdminTaskRowProps {
   task: Task;
+  onEdit?: (task: Task) => void;
   onReassign: (task: Task) => void;
   onStatusChange: (taskId: string, newStatus: TaskStatus) => Promise<void>;
   onDelete: (task: Task) => void;
@@ -33,6 +35,7 @@ const statusLabels: Record<TaskStatus, string> = {
 
 export default function AdminTaskRow({
   task,
+  onEdit,
   onReassign,
   onStatusChange,
   onDelete,
@@ -146,6 +149,19 @@ export default function AdminTaskRow({
       {/* Action Buttons */}
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1">
+          {/* Edit Button */}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(task)}
+              className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer"
+              title="Edit task details"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              <span>Edit</span>
+            </button>
+          )}
+
           {/* Reassign Button */}
           <button
             type="button"

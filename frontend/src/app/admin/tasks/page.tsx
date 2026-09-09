@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, Plus } from "lucide-react";
 
 import useAuth from "@/hooks/useAuth";
 import useUsers from "@/hooks/useUsers";
@@ -12,7 +12,8 @@ import useAdminStats from "@/hooks/useAdminStats";
 import AdminNavigation from "@/components/admin/AdminNavigation";
 import AdminSearchFilterBar from "@/components/admin/AdminSearchFilterBar";
 import AdminTaskTable from "@/components/admin/AdminTaskTable";
-import type { TaskStatus } from "@/types/task";
+import TaskModal from "@/components/tasks/TaskModal";
+import type { CreateTaskData, Task, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export default function AdminTasksPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +37,7 @@ export default function AdminTasksPage() {
     setLimit,
     loading: tasksLoading,
     error: tasksError,
+    createTask,
     updateTask,
     deleteTask,
     assignTask,
@@ -51,6 +53,9 @@ export default function AdminTasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [assigneeFilter, setAssigneeFilter] = useState("ALL");
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Route protection
   useEffect(() => {
@@ -151,6 +156,14 @@ export default function AdminTasksPage() {
     name: `${u.firstName} ${u.lastName}`,
   }));
 
+  const handleCreateTask = async (data: CreateTaskData) => {
+    await createTask(data);
+  };
+
+  const handleUpdateTask = async (taskId: string, data: UpdateTaskData) => {
+    await updateTask(taskId, data);
+  };
+
   const handleReassignTask = async (taskId: string, assignedUserId: string) => {
     await assignTask(taskId, { assignedUserId });
   };
@@ -190,10 +203,19 @@ export default function AdminTasksPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs">
               Total Platform Tasks: {totalTasksCount}
             </span>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Task</span>
+            </button>
           </div>
         </div>
 
@@ -223,6 +245,7 @@ export default function AdminTasksPage() {
           pagination={effectivePagination}
           onPageChange={setPage}
           onLimitChange={setLimit}
+          onEditTask={(task) => setEditingTask(task)}
           onReassignTask={handleReassignTask}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onDeleteTask={handleDeleteTask}
@@ -230,6 +253,25 @@ export default function AdminTasksPage() {
           subtitle="Page-based task listings matching your query and status criteria."
         />
       </div>
+
+      {/* Create Task Modal */}
+      <TaskModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateTask}
+        currentUserId={user?.id}
+      />
+
+      {/* Edit / View Task Modal */}
+      <TaskModal
+        open={!!editingTask}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onCreate={handleCreateTask}
+        onUpdate={handleUpdateTask}
+        onDelete={handleDeleteTask}
+        currentUserId={user?.id}
+      />
     </main>
   );
 }
