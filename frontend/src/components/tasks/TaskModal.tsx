@@ -461,8 +461,10 @@ export default function TaskModal({
                 </p>
 
                 <p className="mt-1 font-medium text-gray-700">
-                  {task.creator.firstName}{" "}
-                  {task.creator.lastName}
+                  {task.creator
+                    ? `${task.creator.firstName || ""} ${task.creator.lastName || ""}`.trim() ||
+                      `@${task.creator.username}`
+                    : "Former Member"}
                 </p>
               </div>
             </div>

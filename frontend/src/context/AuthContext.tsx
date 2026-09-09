@@ -40,6 +40,8 @@ interface AuthContextType {
   ) => Promise<void>;
 
   logout: () => Promise<void>;
+
+  updateUser: (updatedUser: User) => void;
 }
 
 const AuthContext =
@@ -240,6 +242,11 @@ export function AuthProvider({
     }
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
+
   return (
     <AuthContext.Provider
       value={{
@@ -250,6 +257,7 @@ export function AuthProvider({
         login,
         register,
         logout,
+        updateUser,
       }}
     >
       {children}

@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getUsers, getUserById } from "@/services/user.service";
-import type { User } from "@/types/user";
+import {
+  getUsers,
+  getUserById,
+  updateUser as updateUserApi,
+  deleteUser as deleteUserApi,
+} from "@/services/user.service";
+import type { User, UpdateUserData } from "@/types/user";
 import type { PaginationMeta } from "@/types/pagination";
 
 interface UseUsersOptions {
@@ -61,10 +66,40 @@ export default function useUsers(options: UseUsersOptions = {}) {
     return response.data.user;
   };
 
+  const updateUser = async (userId: string, data: UpdateUserData) => {
+    const response = await updateUserApi(userId, data);
+    const updatedUser = response.data.user;
+
+    setUsers((previous) =>
+      previous.map((u) => (u.id === userId ? updatedUser : u))
+    );
+
+    return updatedUser;
+  };
+
+  const deleteUser = async (userId: string) => {
+    await deleteUserApi(userId);
+
+    setUsers((previous) => previous.filter((u) => u.id !== userId));
+
+    // Update pagination count if pagination exists
+    setPagination((prev) => {
+      if (!prev) return null;
+      const newTotal = Math.max(0, prev.totalItems - 1);
+      return {
+        ...prev,
+        totalItems: newTotal,
+        totalPages: Math.ceil(newTotal / prev.limit) || 0,
+      };
+    });
+  };
+
   const handleSetLimit = (newLimit: number) => {
     setLimit(newLimit);
     setPage(1); // Reset to first page when changing page size
   };
+
+  const clearError = () => setError("");
 
   return {
     users,
@@ -75,7 +110,10 @@ export default function useUsers(options: UseUsersOptions = {}) {
     setLimit: handleSetLimit,
     loading,
     error,
+    clearError,
     fetchUsers,
     getUser,
+    updateUser,
+    deleteUser,
   };
 }

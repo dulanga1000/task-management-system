@@ -105,15 +105,19 @@ export default function AdminNavigation() {
             <span>Task Board View</span>
           </Link>
 
-          {/* User Profile Pill */}
-          <div className="flex items-center gap-2 rounded-full border border-gray-200/80 bg-gray-50/80 py-1 pl-1.5 pr-3">
+          {/* User Profile Link */}
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 rounded-full border border-gray-200/80 bg-gray-50/80 py-1 pl-1.5 pr-3 hover:bg-gray-100 transition-colors"
+            title="Manage your profile and password"
+          >
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-white">
               {user?.firstName?.charAt(0).toUpperCase() || "A"}
             </div>
             <span className="text-xs font-medium text-gray-700">
               {user?.firstName} {user?.lastName}
             </span>
-          </div>
+          </Link>
 
           {/* Sign Out Button */}
           <button

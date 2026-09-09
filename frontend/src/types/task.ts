@@ -16,7 +16,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
 
-  creator: TaskUser;
+  creator: TaskUser | null;
 
   assignedUser: TaskUser | null;
 
