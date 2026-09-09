@@ -7,21 +7,50 @@ export interface JwtPayload {
   role: UserRole;
 }
 
-export const generateToken = (
+export const generateAccessToken = (
   payload: JwtPayload
 ): string => {
-  return jwt.sign(payload, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn as NonNullable<
-      SignOptions["expiresIn"]
-    >,
-  });
+  return jwt.sign(
+    payload,
+    env.jwtAccessSecret,
+    {
+      expiresIn:
+        env.jwtAccessExpiresIn as NonNullable<
+          SignOptions["expiresIn"]
+        >,
+    }
+  );
 };
 
-export const verifyToken = (
+export const generateRefreshToken = (
+  payload: JwtPayload
+): string => {
+  return jwt.sign(
+    payload,
+    env.jwtRefreshSecret,
+    {
+      expiresIn:
+        env.jwtRefreshExpiresIn as NonNullable<
+          SignOptions["expiresIn"]
+        >,
+    }
+  );
+};
+
+export const verifyAccessToken = (
   token: string
 ): JwtPayload => {
   return jwt.verify(
     token,
-    env.jwtSecret
+    env.jwtAccessSecret
+  ) as JwtPayload;
+};
+
+export const verifyRefreshToken = (
+  token: string
+): JwtPayload => {
+  return jwt.verify(
+    token,
+    env.jwtRefreshSecret
   ) as JwtPayload;
 };

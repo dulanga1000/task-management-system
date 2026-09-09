@@ -1,123 +1,180 @@
-import type { Request, Response } from "express";
-import {getCurrentUser,loginUser,registerUser} from "../services/auth.service.js";
+import type { Request, Response, NextFunction, } from "express";
+import { getCurrentUser, loginUser, registerUser, refreshAccessToken, logoutUser } from "../services/auth.service.js";
+import { env } from "../config/env.js";
 
-//Register a new user
+// COOKIE OPTIONS
+
+export const getRefreshCookieOptions = () => ({
+  httpOnly: true,
+
+  secure:
+    env.nodeEnv === "production",
+
+  sameSite:
+    "lax" as const,
+
+  maxAge:
+    7 * 24 * 60 * 60 * 1000,
+
+  path: "/api/auth",
+});
+
+// REGISTER
+
 export const register = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
-    const user = await registerUser(req.body);
+    const user =
+      await registerUser(req.body);
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data: {
-        user,
-      },
+      message:
+        "User registered successfully",
+      data: user,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (
-        error.message === "Username is already taken" ||
-        error.message === "Email is already registered"
-      )
-    ) {
-      res.status(409).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Registration error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to register user",
-    });
+    next(error);
   }
 };
 
-// Login a user
+// LOGIN
+
 export const login = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await loginUser(req.body);
+    const result =
+      await loginUser(req.body);
+
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      getRefreshCookieOptions()
+    );
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      data: result,
+      data: {
+        user: result.user,
+        accessToken:
+          result.accessToken,
+      },
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "Invalid email or password"
-    ) {
-      res.status(401).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Login error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to login",
-    });
+    next(error);
   }
 };
 
-// Get current user
+// REFRESH
+
+export const refresh = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshToken =
+      req.cookies?.refreshToken;
+
+    const result =
+      await refreshAccessToken(
+        refreshToken
+      );
+
+    /*
+     * Set the new refresh token cookie during normal rotation.
+     * Grace-window requests only return an access token, so
+     * leave the existing cookie set by the winning request.
+     */
+
+    if (result.refreshToken) {
+      res.cookie(
+        "refreshToken",
+        result.refreshToken,
+        getRefreshCookieOptions()
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Access token refreshed successfully",
+      data: {
+        accessToken:
+          result.accessToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET CURRENT USER
+
 export const getMe = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: "Authentication required",
+        message:
+          "Authentication required",
       });
 
       return;
     }
 
-    const user = await getCurrentUser(req.user.userId);
+    const user =
+      await getCurrentUser(
+        req.user.userId
+      );
 
     res.status(200).json({
       success: true,
-      message: "User retrieved successfully",
-      data: {
-        user,
-      },
+      message:
+        "User retrieved successfully",
+      data: user,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "User not found"
-    ) {
-      res.status(404).json({
-        success: false,
-        message: error.message,
-      });
+    next(error);
+  }
+};
 
-      return;
-    }
+// LOGOUT
 
-    console.error("Get current user error:", error);
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshToken =
+      req.cookies?.refreshToken;
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve user",
+    await logoutUser(
+      refreshToken
+    );
+
+    res.clearCookie(
+      "refreshToken",
+      getRefreshCookieOptions()
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Logout successful",
     });
+  } catch (error) {
+    next(error);
   }
 };

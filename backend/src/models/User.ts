@@ -1,6 +1,13 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { USER_ROLES, type UserRole } from "../constants/roles.js";
 
+export interface IProfilePicture {
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  updatedAt: Date;
+}
+
 export interface IUser extends Document {
   firstName: string;
   lastName: string;
@@ -8,6 +15,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  profilePicture?: IProfilePicture | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,11 +67,23 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.USER,
     },
+
+    profilePicture: {
+      type: {
+        storageKey: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        size: { type: Number, required: true },
+        updatedAt: { type: Date, default: Date.now },
+      },
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+userSchema.index({ createdAt: -1 });
 
 const User = mongoose.model<IUser>("User", userSchema);
 

@@ -1,10 +1,11 @@
-import type { Request, Response } from "express";
-import {createTask,getTasks,getTaskById,updateTask,assignTask,deleteTask} from "../services/task.service.js";
+import type { Request,Response,NextFunction} from "express";
+import {createTask,getTasks,getTaskById,updateTask,assignTask,deleteTask,reorderTasks} from "../services/task.service.js";
 
 // Create a new task
 export const create = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -29,44 +30,42 @@ export const create = async (
       },
     });
   } catch (error) {
-    console.error("Create task error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to create task",
-    });
+    next(error);
   }
 };
 
-// Get all tasks
+// Get all tasks with optional pagination
 export const getAll = async (
-  _req: Request,
-  res: Response
+  req: Request,
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
-    const tasks = await getTasks();
+    const { page, limit } = req.query;
+
+    const { tasks, pagination } = await getTasks({
+      page: page as string | undefined,
+      limit: limit as string | undefined,
+    });
 
     res.status(200).json({
       success: true,
       message: "Tasks retrieved successfully",
       data: {
         tasks,
+        pagination,
       },
     });
   } catch (error) {
-    console.error("Get tasks error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve tasks",
-    });
+    next(error);
   }
 };
 
 // Get a task by ID
 export const getById = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const task = await getTaskById(req.params.id);
@@ -88,19 +87,15 @@ export const getById = async (
       },
     });
   } catch (error) {
-    console.error("Get task error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve task",
-    });
+    next(error);
   }
 };
 
 // Update a task
 export const update = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -136,32 +131,15 @@ export const update = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message ===
-        "You do not have permission to update this task"
-    ) {
-      res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Update task error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update task",
-    });
+    next(error);
   }
 };
 
 // Assign a task
 export const assign = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -197,38 +175,15 @@ export const assign = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (
-        error.message ===
-          "You can only assign an unassigned task to yourself" ||
-        error.message ===
-          "You do not have permission to assign this task" ||
-        error.message ===
-          "Assigned user not found"
-      )
-    ) {
-      res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-
-      return;
-    }
-
-    console.error("Assign task error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to assign task",
-    });
+    next(error);
   }
 };
 
 // Delete a task
 export const remove = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -260,24 +215,34 @@ export const remove = async (
       message: "Task deleted successfully",
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message ===
-        "You do not have permission to delete this task"
-    ) {
-      res.status(403).json({
+    next(error);
+  }
+};
+
+// Reorder tasks
+export const reorder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
         success: false,
-        message: error.message,
+        message: "Authentication required",
       });
 
       return;
     }
 
-    console.error("Delete task error:", error);
+    const { items } = req.body;
+    await reorderTasks(items, req.user.userId, req.user.role);
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete task",
+    res.status(200).json({
+      success: true,
+      message: "Tasks reordered successfully",
     });
+  } catch (error) {
+    next(error);
   }
 };

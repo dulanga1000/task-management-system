@@ -1,10 +1,19 @@
 import { Router } from "express";
-import {create,getAll,getById,update,assign,remove} from "../controllers/task.controller.js";
+import {create,getAll,getById,update,assign,remove,reorder} from "../controllers/task.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import {assignTaskSchema, createTaskSchema,updateTaskSchema} from "../validations/task.validation.js";
+import {assignTaskSchema, createTaskSchema,updateTaskSchema,reorderTasksSchema} from "../validations/task.validation.js";
+import attachmentRoutes from "./attachment.routes.js";
+import activityRoutes from "./activity.routes.js";
 
 const router = Router();
+
+// Sub-routes for task attachments: /api/tasks/:taskId/attachments
+router.use("/:taskId/attachments", attachmentRoutes);
+
+// Sub-routes for task activities and comments: /api/tasks/:taskId/activities
+router.use("/:taskId/activities", activityRoutes);
+
 
 router.post(
   "/",
@@ -17,6 +26,13 @@ router.get(
   "/",
   authenticate,
   getAll
+);
+
+router.patch(
+  "/reorder",
+  authenticate,
+  validate(reorderTasksSchema),
+  reorder
 );
 
 router.get(
