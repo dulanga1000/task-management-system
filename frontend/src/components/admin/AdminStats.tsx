@@ -1,80 +1,124 @@
+"use client";
+
+import React from "react";
+import {
+  Users,
+  CheckSquare,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  UserX,
+} from "lucide-react";
 import type { Task } from "@/types/task";
 import type { User } from "@/types/user";
+import AdminStatWidget from "./AdminStatWidget";
 
 interface AdminStatsProps {
   users: User[];
   tasks: Task[];
 }
 
-export default function AdminStats({
-  users,
-  tasks,
-}: AdminStatsProps) {
+export default function AdminStats({ users, tasks }: AdminStatsProps) {
   const totalUsers = users.length;
   const totalTasks = tasks.length;
 
-  const todoTasks = tasks.filter(
-    (task) => task.status === "TODO"
-  ).length;
+  const todoTasks = tasks.filter((t) => t.status === "TODO").length;
+  const doingTasks = tasks.filter((t) => t.status === "DOING").length;
+  const doneTasks = tasks.filter((t) => t.status === "DONE").length;
+  const unassignedTasks = tasks.filter((t) => !t.assignedUser).length;
 
-  const doingTasks = tasks.filter(
-    (task) => task.status === "DOING"
-  ).length;
-
-  const doneTasks = tasks.filter(
-    (task) => task.status === "DONE"
-  ).length;
-
-  const stats = [
-    {
-      title: "Total Users",
-      value: totalUsers,
-    },
-    {
-      title: "Total Tasks",
-      value: totalTasks,
-    },
-    {
-      title: "To Do",
-      value: todoTasks,
-    },
-    {
-      title: "Doing",
-      value: doingTasks,
-    },
-    {
-      title: "Done",
-      value: doneTasks,
-    },
-  ];
+  const completionRate =
+    totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
     <section>
-      <div className="mb-5">
-        <h2 className="text-lg font-semibold text-gray-950">
-          Overview
+      <div className="mb-4">
+        <h2 className="text-base font-bold text-gray-900 tracking-tight">
+          System Overview & Metrics
         </h2>
-
-        <p className="mt-1 text-sm text-gray-500">
-          Current system statistics.
+        <p className="text-xs text-gray-400 font-medium">
+          Key governance and operational performance indicators.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
-          >
-            <p className="text-sm font-medium text-gray-500">
-              {stat.title}
-            </p>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {/* Total Users */}
+        <AdminStatWidget
+          title="Total Users"
+          value={totalUsers}
+          subtitle="Registered accounts"
+          icon={Users}
+          iconColor="text-purple-600"
+          iconBg="bg-purple-50"
+        />
 
-            <p className="mt-3 text-3xl font-bold tracking-tight text-gray-950">
-              {stat.value}
-            </p>
-          </div>
-        ))}
+        {/* Total Tasks */}
+        <AdminStatWidget
+          title="Total Tasks"
+          value={totalTasks}
+          subtitle="All status columns"
+          icon={CheckSquare}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
+        />
+
+        {/* In Progress */}
+        <AdminStatWidget
+          title="In Progress"
+          value={doingTasks}
+          subtitle="Currently active"
+          icon={Clock}
+          iconColor="text-sky-600"
+          iconBg="bg-sky-50"
+          badge={{
+            text: `${doingTasks} active`,
+            variant: "info",
+          }}
+        />
+
+        {/* Completed */}
+        <AdminStatWidget
+          title="Completed"
+          value={doneTasks}
+          subtitle="Marked as done"
+          icon={CheckCircle2}
+          iconColor="text-emerald-600"
+          iconBg="bg-emerald-50"
+          badge={{
+            text: "Finished",
+            variant: "success",
+          }}
+        />
+
+        {/* Unassigned */}
+        <AdminStatWidget
+          title="Unassigned"
+          value={unassignedTasks}
+          subtitle="Needs allocation"
+          icon={UserX}
+          iconColor="text-amber-600"
+          iconBg="bg-amber-50"
+          badge={
+            unassignedTasks > 0
+              ? { text: "Action required", variant: "warning" }
+              : undefined
+          }
+        />
+
+        {/* Completion Rate */}
+        <AdminStatWidget
+          title="Completion"
+          value={`${completionRate}%`}
+          subtitle="System completion rate"
+          icon={TrendingUp}
+          iconColor="text-indigo-600"
+          iconBg="bg-indigo-50"
+          badge={{
+            text: `${completionRate}%`,
+            variant: completionRate >= 50 ? "success" : "default",
+          }}
+        />
       </div>
     </section>
   );

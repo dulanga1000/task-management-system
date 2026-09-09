@@ -34,6 +34,7 @@ export default function DashboardPage() {
     tasks,
     loading: tasksLoading,
     error,
+    clearError,
     createTask,
     updateTask,
     deleteTask,
@@ -61,6 +62,20 @@ export default function DashboardPage() {
     taskId: string,
     data: UpdateTaskData
   ) => {
+    const targetTask = tasks.find((t) => t._id === taskId);
+    if (
+      user &&
+      targetTask &&
+      !targetTask.assignedUser &&
+      targetTask.creator?._id !== user.id &&
+      user.role !== "ADMIN"
+    ) {
+      // Auto-assign unassigned task to current user when moving it
+      await assignTask(taskId, {
+        assignedUserId: user.id,
+      });
+    }
+
     await updateTask(taskId, data);
   };
 
@@ -91,11 +106,10 @@ export default function DashboardPage() {
 
   if (authLoading || !user || tasksLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+      <main className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
-
-          <p className="mt-4 text-sm text-gray-500">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+          <p className="mt-4 text-sm font-medium text-muted">
             Loading your workspace...
           </p>
         </div>
@@ -104,30 +118,43 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-background bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50/50 via-background to-background">
       <DashboardHeader
         onCreateTask={() =>
           setShowCreateModal(true)
         }
       />
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-6 py-8 lg:px-8">
 
         {/* Workspace */}
-        <div className="mb-6">
-          <p className="text-sm text-gray-500">
-            {user?.role === "ADMIN"
-              ? "Administrator workspace"
-              : "Personal workspace"}
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
+              Task Board
+            </h2>
+            <p className="text-sm font-medium text-muted">
+              {user?.role === "ADMIN"
+                ? "Administrator workspace"
+                : "Personal workspace"}
+            </p>
+          </div>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-sm font-medium text-red-600">
+          <div className="mb-8 flex items-center justify-between rounded-xl border border-danger/20 bg-danger/5 p-4 glass">
+            <p className="text-sm font-semibold text-danger">
               {error}
             </p>
+            <button
+              type="button"
+              onClick={clearError}
+              className="rounded-lg p-1 text-danger/70 hover:bg-danger/10 hover:text-danger cursor-pointer transition-colors"
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -135,10 +162,12 @@ export default function DashboardPage() {
         <DashboardStats tasks={tasks} />
 
         {/* Board */}
-        <div className="mt-8">
+        <div className="mt-8 overflow-x-auto pb-4">
           <Board
             tasks={tasks}
             onTaskClick={handleTaskClick}
+            onTaskUpdate={handleUpdateTask}
+            onTaskAssign={handleAssignTask}
           />
         </div>
       </div>

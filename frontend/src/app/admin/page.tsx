@@ -7,12 +7,13 @@ import useAuth from "@/hooks/useAuth";
 import useUsers from "@/hooks/useUsers";
 import useTasks from "@/hooks/useTasks";
 
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminNavigation from "@/components/admin/AdminNavigation";
 import AdminStats from "@/components/admin/AdminStats";
-import UserTable from "@/components/admin/UserTable";
 import AdminTaskTable from "@/components/admin/AdminTaskTable";
+import UserTable from "@/components/admin/UserTable";
+import type { TaskStatus } from "@/types/task";
 
-export default function AdminPage() {
+export default function AdminOverviewPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -21,24 +22,21 @@ export default function AdminPage() {
     loading: usersLoading,
     error: usersError,
   } = useUsers({
-    enabled:
-      !authLoading &&
-      user?.role === "ADMIN",
+    enabled: !authLoading && user?.role === "ADMIN",
   });
 
   const {
     tasks,
     loading: tasksLoading,
     error: tasksError,
+    updateTask,
+    deleteTask,
+    assignTask,
   } = useTasks({
-    enabled:
-      !authLoading &&
-      user?.role === "ADMIN",
+    enabled: !authLoading && user?.role === "ADMIN",
   });
 
-  /*
-   * Admin route protection
-   */
+  // Admin access guard
   useEffect(() => {
     if (authLoading) return;
 
@@ -52,9 +50,6 @@ export default function AdminPage() {
     }
   }, [authLoading, user, router]);
 
-  /*
-   * Loading
-   */
   if (
     authLoading ||
     !user ||
@@ -65,10 +60,9 @@ export default function AdminPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
-
-          <p className="mt-4 text-sm text-gray-500">
-            Loading admin dashboard...
+          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
+          <p className="mt-4 text-xs font-semibold text-gray-500 tracking-wide">
+            Accessing Administrator Console...
           </p>
         </div>
       </main>
@@ -77,31 +71,58 @@ export default function AdminPage() {
 
   const error = usersError || tasksError;
 
-  return (
-    <main className="min-h-screen bg-gray-50">
-      <AdminHeader />
+  const handleReassignTask = async (taskId: string, assignedUserId: string) => {
+    await assignTask(taskId, { assignedUserId });
+  };
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        {/* Error */}
+  const handleUpdateTaskStatus = async (
+    taskId: string,
+    status: TaskStatus
+  ) => {
+    await updateTask(taskId, { status });
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId);
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-50/60 pb-16">
+      <AdminNavigation />
+
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 space-y-8">
+        {/* Error Notification */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-sm font-medium text-red-600">
-              {error}
-            </p>
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 shadow-xs">
+            {error}
           </div>
         )}
 
-        {/* Statistics */}
-        <AdminStats
-          users={users}
+        {/* Global Statistics */}
+        <AdminStats users={users} tasks={tasks} />
+
+        {/* Recent Tasks Widget with Reassign & Actions */}
+        <AdminTaskTable
           tasks={tasks}
+          users={users}
+          onReassignTask={handleReassignTask}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          onDeleteTask={handleDeleteTask}
+          title="Recent System Tasks"
+          subtitle="Latest task creations and updates across the platform."
+          showViewAllLink={true}
+          limit={5}
         />
 
-        {/* Users */}
-        <UserTable users={users} />
-
-        {/* Recent Tasks */}
-        <AdminTaskTable tasks={tasks} />
+        {/* Registered Users Overview */}
+        <UserTable
+          users={users}
+          tasks={tasks}
+          title="Recent User Registrations"
+          subtitle="Latest team members and administrators added to the organization."
+          showViewAllLink={true}
+          limit={5}
+        />
       </div>
     </main>
   );

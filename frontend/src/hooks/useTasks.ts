@@ -100,12 +100,14 @@ export default function useTasks(
     const response =
       await createTaskApi(data);
 
+    const newTask = response.data.task;
+
     setTasks((previous) => [
-      response.data,
+      newTask,
       ...previous,
     ]);
 
-    return response.data;
+    return newTask;
   };
 
   // ----------------------------------------------
@@ -116,21 +118,46 @@ export default function useTasks(
     taskId: string,
     data: UpdateTaskData
   ) => {
-    const response =
-      await updateTaskApi(
-        taskId,
-        data
+    // Snapshot previous tasks for rollback
+    let previousTasks: Task[] = [];
+    setTasks((previous) => {
+      previousTasks = previous;
+      return previous.map((task) =>
+        task._id === taskId
+          ? { ...task, ...data }
+          : task
+      );
+    });
+
+    try {
+      const response =
+        await updateTaskApi(
+          taskId,
+          data
+        );
+
+      const updatedTask = response.data.task;
+
+      setTasks((previous) =>
+        previous.map((task) =>
+          task._id === taskId
+            ? updatedTask
+            : task
+        )
       );
 
-    setTasks((previous) =>
-      previous.map((task) =>
-        task._id === taskId
-          ? response.data
-          : task
-      )
-    );
-
-    return response.data;
+      return updatedTask;
+    } catch (err: any) {
+      // Rollback to previous state on failure
+      if (previousTasks.length > 0) {
+        setTasks(previousTasks);
+      }
+      const errorMsg =
+        err?.response?.data?.message ||
+        "Failed to update task.";
+      setError(errorMsg);
+      throw err;
+    }
   };
 
   // ----------------------------------------------
@@ -164,21 +191,26 @@ export default function useTasks(
         data
       );
 
+    const assignedTask = response.data.task;
+
     setTasks((previous) =>
       previous.map((task) =>
         task._id === taskId
-          ? response.data
+          ? assignedTask
           : task
       )
     );
 
-    return response.data;
+    return assignedTask;
   };
+
+  const clearError = () => setError("");
 
   return {
     tasks,
     loading,
     error,
+    clearError,
 
     fetchTasks,
     createTask,

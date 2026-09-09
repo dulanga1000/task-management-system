@@ -1,26 +1,42 @@
 "use client";
 
+import React, { useMemo } from "react";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
+import { CheckCircle2, Clock, Circle } from "lucide-react";
+
 import type { Task, TaskStatus } from "@/types/task";
+import SortableTask from "./SortableTask";
 
 interface BoardColumnProps {
   title: string;
   status: TaskStatus;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
+  onTaskAssign?: (taskId: string) => void;
 }
 
-const statusStyles = {
+const statusConfig = {
   TODO: {
-    dot: "bg-gray-400",
-    count: "bg-gray-100 text-gray-600",
+    icon: Circle,
+    color: "text-amber-500",
+    bg: "bg-amber-50/50",
+    border: "border-amber-200",
+    count: "bg-amber-100 text-amber-800 border-amber-200/60",
   },
   DOING: {
-    dot: "bg-blue-500",
-    count: "bg-blue-50 text-blue-600",
+    icon: Clock,
+    color: "text-blue-500",
+    bg: "bg-blue-50/50",
+    border: "border-blue-200",
+    count: "bg-blue-100 text-blue-800 border-blue-200/60",
   },
   DONE: {
-    dot: "bg-green-500",
-    count: "bg-green-50 text-green-600",
+    icon: CheckCircle2,
+    color: "text-emerald-500",
+    bg: "bg-emerald-50/50",
+    border: "border-emerald-200",
+    count: "bg-emerald-100 text-emerald-800 border-emerald-200/60",
   },
 };
 
@@ -29,80 +45,66 @@ export default function BoardColumn({
   status,
   tasks,
   onTaskClick,
+  onTaskAssign,
 }: BoardColumnProps) {
-  const styles = statusStyles[status];
+  const config = statusConfig[status];
+  const Icon = config.icon;
+
+  const taskIds = useMemo(() => tasks.map((t) => t._id), [tasks]);
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: status,
+    data: {
+      type: "Column",
+      status,
+    },
+  });
 
   return (
-    <div className="flex min-h-[500px] flex-col rounded-xl border border-gray-200 bg-gray-100/70">
-      {/* Column header */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${styles.dot}`}
-          />
-
-          <h2 className="text-sm font-semibold text-gray-900">
+    <div className="flex w-full md:w-80 lg:w-[350px] shrink-0 flex-col rounded-2xl border border-gray-200/70 bg-gray-50/70 backdrop-blur-md shadow-xs">
+      {/* Column Header */}
+      <div className="flex items-center justify-between border-b border-gray-200/60 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <Icon className={`h-4 w-4 ${config.color}`} />
+          <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
             {title}
           </h2>
         </div>
 
         <span
-          className={`rounded-full px-2 py-1 text-xs font-semibold ${styles.count}`}
+          className={`flex h-6 min-w-[24px] items-center justify-center rounded-full border px-2 text-xs font-bold ${config.count}`}
         >
           {tasks.length}
         </span>
       </div>
 
-      {/* Tasks */}
-      <div className="flex flex-1 flex-col gap-3 p-3">
-        {tasks.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300">
-            <p className="text-xs text-gray-400">
-              No tasks here
-            </p>
-          </div>
-        ) : (
-          tasks.map((task) => (
-            <button
-              key={task._id}
-              type="button"
-              onClick={() => onTaskClick(task)}
-              className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="line-clamp-2 text-sm font-semibold text-gray-900">
-                  {task.title}
-                </h3>
-
-                <span className="shrink-0 text-gray-300">
-                  •••
-                </span>
-              </div>
-
-              <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
-                {task.description}
+      {/* Droppable Task List Container */}
+      <div
+        ref={setNodeRef}
+        className={`flex flex-1 flex-col gap-3 p-3 min-h-[500px] transition-all duration-200 ${
+          isOver
+            ? "bg-primary/[0.04] ring-2 ring-primary/30 ring-inset rounded-b-2xl"
+            : ""
+        }`}
+      >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          {tasks.length === 0 ? (
+            <div className="pointer-events-none flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-gray-200/80 bg-white/40 p-6">
+              <p className="text-xs font-medium text-gray-400">
+                Drop tasks here
               </p>
-
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-[11px] font-medium text-gray-400">
-                  {new Date(task.createdAt).toLocaleDateString()}
-                </span>
-
-                {task.assignedUser ? (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                    {task.assignedUser.firstName
-                      .charAt(0)
-                      .toUpperCase()}
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-medium text-gray-400">
-                    Unassigned
-                  </span>
-                )}
-              </div>
-            </button>
-          ))
-        )}
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <SortableTask
+                key={task._id}
+                task={task}
+                onTaskClick={onTaskClick}
+                onTaskAssign={onTaskAssign}
+              />
+            ))
+          )}
+        </SortableContext>
       </div>
     </div>
   );

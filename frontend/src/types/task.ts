@@ -50,5 +50,7 @@ export interface TasksResponse {
 export interface TaskResponse {
   success: boolean;
   message: string;
-  data: Task;
+  data: {
+    task: Task;
+  };
 }

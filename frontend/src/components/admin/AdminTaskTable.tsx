@@ -1,111 +1,142 @@
-import type { Task } from "@/types/task";
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, CheckSquare, Inbox } from "lucide-react";
+import type { Task, TaskStatus } from "@/types/task";
+import type { User } from "@/types/user";
+import AdminTaskRow from "./AdminTaskRow";
+import ReassignTaskModal from "./ReassignTaskModal";
+import DeleteTaskConfirmModal from "./DeleteTaskConfirmModal";
 
 interface AdminTaskTableProps {
   tasks: Task[];
+  users: User[];
+  onReassignTask: (taskId: string, userId: string) => Promise<void>;
+  onUpdateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
+  onDeleteTask: (taskId: string) => Promise<void>;
+  title?: string;
+  subtitle?: string;
+  showViewAllLink?: boolean;
+  limit?: number;
 }
-
-const statusStyles = {
-  TODO: "bg-gray-100 text-gray-700",
-  DOING: "bg-blue-50 text-blue-700",
-  DONE: "bg-green-50 text-green-700",
-};
-
-const statusLabels = {
-  TODO: "To Do",
-  DOING: "Doing",
-  DONE: "Done",
-};
 
 export default function AdminTaskTable({
   tasks,
+  users,
+  onReassignTask,
+  onUpdateTaskStatus,
+  onDeleteTask,
+  title = "All System Tasks",
+  subtitle = "Complete listing of tasks across all projects and users.",
+  showViewAllLink = false,
+  limit,
 }: AdminTaskTableProps) {
-  const recentTasks = tasks.slice(0, 5);
+  const [reassigningTask, setReassigningTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+
+  const displayedTasks = limit ? tasks.slice(0, limit) : tasks;
 
   return (
-    <section className="mt-10">
-      <div className="mb-5">
-        <h2 className="text-lg font-semibold text-gray-950">
-          Recent Tasks
-        </h2>
+    <section className="rounded-2xl border border-gray-200/80 bg-white shadow-xs overflow-hidden">
+      {/* Table Header / Action Bar */}
+      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div>
+          <h2 className="text-sm font-bold text-gray-900 tracking-tight">
+            {title}
+          </h2>
+          <p className="text-xs text-gray-400 font-medium">
+            {subtitle}
+          </p>
+        </div>
 
-        <p className="mt-1 text-sm text-gray-500">
-          Latest tasks created in the system.
-        </p>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+          </span>
+
+          {showViewAllLink && (
+            <Link
+              href="/admin/tasks"
+              className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+            >
+              <span>View all</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        {recentTasks.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-sm text-gray-500">
-              No tasks available.
+      {/* Table Content */}
+      <div className="overflow-x-auto">
+        {displayedTasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400 border border-gray-100">
+              <Inbox className="h-6 w-6" />
+            </div>
+            <p className="mt-3 text-sm font-bold text-gray-800">
+              No tasks found
+            </p>
+            <p className="mt-1 text-xs text-gray-400 max-w-xs">
+              There are no tasks matching the selected filters or currently created in the system.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-gray-50">
-                <tr className="text-left">
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Task
-                  </th>
+          <table className="w-full min-w-[850px] text-left">
+            <thead className="bg-gray-50/70 border-b border-gray-100">
+              <tr>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Task
+                </th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Creator
+                </th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Assigned User
+                </th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Status
+                </th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Created
+                </th>
+                <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
 
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Creator
-                  </th>
-
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Assigned To
-                  </th>
-
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {recentTasks.map((task) => (
-                  <tr
-                    key={task._id}
-                    className="border-b border-gray-100 last:border-0"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="max-w-[280px]">
-                        <p className="truncate font-medium text-gray-950">
-                          {task.title}
-                        </p>
-
-                        <p className="mt-1 truncate text-sm text-gray-500">
-                          {task.description}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {task.creator?.firstName}{" "}
-                      {task.creator?.lastName}
-                    </td>
-
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {task.assignedUser
-                        ? `${task.assignedUser.firstName} ${task.assignedUser.lastName}`
-                        : "Unassigned"}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[task.status]}`}
-                      >
-                        {statusLabels[task.status]}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            <tbody className="divide-y divide-gray-100">
+              {displayedTasks.map((task) => (
+                <AdminTaskRow
+                  key={task._id}
+                  task={task}
+                  onReassign={(t) => setReassigningTask(t)}
+                  onStatusChange={onUpdateTaskStatus}
+                  onDelete={(t) => setDeletingTask(t)}
+                />
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Reassign Modal */}
+      <ReassignTaskModal
+        open={!!reassigningTask}
+        task={reassigningTask}
+        users={users}
+        onClose={() => setReassigningTask(null)}
+        onReassign={onReassignTask}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteTaskConfirmModal
+        open={!!deletingTask}
+        task={deletingTask}
+        onClose={() => setDeletingTask(null)}
+        onConfirm={onDeleteTask}
+      />
     </section>
   );
 }
