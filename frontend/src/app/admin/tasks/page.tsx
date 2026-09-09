@@ -156,12 +156,24 @@ export default function AdminTasksPage() {
     name: `${u.firstName} ${u.lastName}`,
   }));
 
-  const handleCreateTask = async (data: CreateTaskData) => {
-    await createTask(data);
+  const handleCreateTask = async (
+    data: CreateTaskData,
+    assignedUserId?: string
+  ) => {
+    const newTask = await createTask(data);
+    if (assignedUserId && newTask?._id) {
+      await assignTask(newTask._id, { assignedUserId });
+    }
   };
 
   const handleUpdateTask = async (taskId: string, data: UpdateTaskData) => {
     await updateTask(taskId, data);
+  };
+
+  const handleAssignTask = async (taskId: string, assignedUserId?: string) => {
+    if (assignedUserId) {
+      await assignTask(taskId, { assignedUserId });
+    }
   };
 
   const handleReassignTask = async (taskId: string, assignedUserId: string) => {
@@ -242,6 +254,7 @@ export default function AdminTasksPage() {
         <AdminTaskTable
           tasks={filteredTasks}
           users={users}
+          currentUserId={user?.id}
           pagination={effectivePagination}
           onPageChange={setPage}
           onLimitChange={setLimit}
@@ -259,6 +272,7 @@ export default function AdminTasksPage() {
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateTask}
+        users={users}
         currentUserId={user?.id}
       />
 
@@ -270,6 +284,8 @@ export default function AdminTasksPage() {
         onCreate={handleCreateTask}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}
+        onAssign={handleAssignTask}
+        users={users}
         currentUserId={user?.id}
       />
     </main>

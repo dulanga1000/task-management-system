@@ -18,6 +18,7 @@ interface AdminTaskTableProps {
   onReassignTask: (taskId: string, userId: string) => Promise<void>;
   onUpdateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   onDeleteTask: (taskId: string) => Promise<void>;
+  currentUserId?: string;
   pagination?: PaginationMeta | null;
   onPageChange?: (page: number) => void;
   onLimitChange?: (limit: number) => void;
@@ -30,6 +31,7 @@ interface AdminTaskTableProps {
 export default function AdminTaskTable({
   tasks,
   users,
+  currentUserId,
   onEditTask,
   onReassignTask,
   onUpdateTaskStatus,
@@ -147,6 +149,7 @@ export default function AdminTaskTable({
         open={!!reassigningTask}
         task={reassigningTask}
         users={users}
+        currentUserId={currentUserId}
         onClose={() => setReassigningTask(null)}
         onReassign={onReassignTask}
       />

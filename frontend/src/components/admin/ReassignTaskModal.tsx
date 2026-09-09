@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserCheck, UserX, X, AlertCircle } from "lucide-react";
 import type { Task } from "@/types/task";
 import type { User } from "@/types/user";
@@ -11,6 +11,7 @@ interface ReassignTaskModalProps {
   open: boolean;
   onClose: () => void;
   onReassign: (taskId: string, userId: string) => Promise<void>;
+  currentUserId?: string;
 }
 
 export default function ReassignTaskModal({
@@ -19,10 +20,20 @@ export default function ReassignTaskModal({
   open,
   onClose,
   onReassign,
+  currentUserId,
 }: ReassignTaskModalProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (task) {
+      setSelectedUserId(task.assignedUser?._id || "");
+    } else {
+      setSelectedUserId("");
+    }
+    setError("");
+  }, [task, open]);
 
   if (!open || !task) {
     return null;
@@ -30,8 +41,8 @@ export default function ReassignTaskModal({
 
   const currentAssignee = task.assignedUser;
 
-  // Only standard USER accounts can be assigned/reassigned tasks
-  const eligibleUsers = users.filter((u) => u.role === "USER");
+  // Allow assignment to any registered account (including Admin themselves)
+  const eligibleUsers = users;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +111,7 @@ export default function ReassignTaskModal({
             {currentAssignee ? (
               <span className="font-semibold text-gray-800">
                 {currentAssignee.firstName} {currentAssignee.lastName}
+                {currentAssignee._id === currentUserId ? " (You)" : ""}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
@@ -129,10 +141,20 @@ export default function ReassignTaskModal({
               <option value="">-- Choose a team member --</option>
               {eligibleUsers.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.firstName} {u.lastName} ({u.email})
+                  {u.firstName} {u.lastName} ({u.email}){u.id === currentUserId ? " (You)" : u.role === "ADMIN" ? " (Admin)" : ""}
                 </option>
               ))}
             </select>
+
+            {currentUserId && selectedUserId !== currentUserId && currentAssignee?._id !== currentUserId && (
+              <button
+                type="button"
+                onClick={() => setSelectedUserId(currentUserId)}
+                className="mt-2 text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <span>⚡ Assign to myself</span>
+              </button>
+            )}
           </div>
 
           {error && (

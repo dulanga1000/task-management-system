@@ -184,6 +184,14 @@ export const assignTask = async (
     );
   }
 
+  // Normal users cannot assign tasks to an administrator
+  if (!isAdmin && assignedUser.role === USER_ROLES.ADMIN) {
+    throw new AppError(
+      "You cannot assign tasks to an administrator",
+      403
+    );
+  }
+
   if (task.assignedUser) {
     throw new AppError(
       "You can only assign an unassigned task to yourself",

@@ -107,6 +107,7 @@ export default function AdminOverviewPage() {
         <AdminTaskTable
           tasks={tasks}
           users={users}
+          currentUserId={user?.id}
           onReassignTask={handleReassignTask}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onDeleteTask={handleDeleteTask}
