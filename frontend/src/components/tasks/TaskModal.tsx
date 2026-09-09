@@ -8,6 +8,7 @@ import type {
   TaskStatus,
   UpdateTaskData,
 } from "@/types/task";
+import type { User } from "@/types/user";
 
 interface TaskModalProps {
   open: boolean;
@@ -15,23 +16,26 @@ interface TaskModalProps {
   onClose: () => void;
 
   onCreate: (
-    data: CreateTaskData
+    data: CreateTaskData,
+    assignedUserId?: string
   ) => Promise<unknown>;
 
-  onUpdate: (
+  onUpdate?: (
     taskId: string,
     data: UpdateTaskData
   ) => Promise<unknown>;
 
-  onDelete: (
+  onDelete?: (
     taskId: string
   ) => Promise<unknown>;
 
-  onAssign: (
-    taskId: string
+  onAssign?: (
+    taskId: string,
+    assignedUserId?: string
   ) => Promise<unknown>;
 
   currentUserId?: string;
+  users?: User[];
 }
 
 export default function TaskModal({
@@ -43,6 +47,7 @@ export default function TaskModal({
   onDelete,
   onAssign,
   currentUserId,
+  users,
 }: TaskModalProps) {
   const isEditing = !!task;
 
@@ -50,21 +55,25 @@ export default function TaskModal({
   const [description, setDescription] = useState("");
   const [status, setStatus] =
     useState<TaskStatus>("TODO");
+  const [assignedUserId, setAssignedUserId] = useState<string>("");
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState("");
+  const eligibleUsers = users || [];
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description);
       setStatus(task.status);
+      setAssignedUserId(task.assignedUser?._id || "");
     } else {
       setTitle("");
       setDescription("");
       setStatus("TODO");
+      setAssignedUserId("");
     }
 
     setError("");
@@ -89,16 +98,29 @@ export default function TaskModal({
       setError("");
 
       if (isEditing && task) {
-        await onUpdate(task._id, {
-          title,
-          description,
-          status,
-        });
+        if (onUpdate) {
+          await onUpdate(task._id, {
+            title,
+            description,
+            status,
+          });
+        }
+
+        // If assignee was changed or assigned by Admin
+        const previousAssignedId = task.assignedUser?._id || "";
+        if (assignedUserId !== previousAssignedId && onAssign) {
+          if (assignedUserId) {
+            await onAssign(task._id, assignedUserId);
+          }
+        }
       } else {
-        await onCreate({
-          title,
-          description,
-        });
+        await onCreate(
+          {
+            title,
+            description,
+          },
+          assignedUserId || undefined
+        );
       }
 
       onClose();
@@ -113,7 +135,7 @@ export default function TaskModal({
   };
 
   const handleDelete = async () => {
-    if (!task) return;
+    if (!task || !onDelete) return;
 
     const confirmed = window.confirm(
       "Are you sure you want to delete this task?"
@@ -139,7 +161,7 @@ export default function TaskModal({
   };
 
   const handleAssign = async () => {
-    if (!task) return;
+    if (!task || !onAssign) return;
 
     try {
       setAssigning(true);
@@ -245,6 +267,44 @@ export default function TaskModal({
             />
           </div>
 
+          {/* Assignee Selection (When creating task as Admin) */}
+          {!isEditing && eligibleUsers.length > 0 && (
+            <div>
+              <label
+                htmlFor="create-task-assignee"
+                className="mb-2 block text-sm font-medium text-gray-900"
+              >
+                Assign To (Optional)
+              </label>
+
+              <select
+                id="create-task-assignee"
+                value={assignedUserId}
+                onChange={(event) =>
+                  setAssignedUserId(event.target.value)
+                }
+                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              >
+                <option value="">-- Unassigned --</option>
+                {eligibleUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} (@{u.username}){u.id === currentUserId ? " (You)" : u.role === "ADMIN" ? " (Admin)" : ""}
+                  </option>
+                ))}
+              </select>
+
+              {currentUserId && assignedUserId !== currentUserId && (
+                <button
+                  type="button"
+                  onClick={() => setAssignedUserId(currentUserId)}
+                  className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <span>⚡ Assign to myself</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Status */}
           {isEditing && (
             <div>
@@ -277,11 +337,50 @@ export default function TaskModal({
           {/* Assignment */}
           {isEditing && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Assignment
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Assignment
+                </p>
+                {task.assignedUser && eligibleUsers.length > 0 && (
+                  <span className="text-xs text-gray-500">
+                    Currently: <strong className="text-gray-800 font-semibold">{task.assignedUser.firstName} {task.assignedUser.lastName}</strong>
+                  </span>
+                )}
+              </div>
 
-              {task.assignedUser ? (
+              {eligibleUsers.length > 0 ? (
+                <div className="mt-3">
+                  <label
+                    htmlFor="edit-task-assignee"
+                    className="mb-1.5 block text-xs font-medium text-gray-700"
+                  >
+                    Assignee
+                  </label>
+                  <select
+                    id="edit-task-assignee"
+                    value={assignedUserId}
+                    onChange={(e) => setAssignedUserId(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    <option value="">-- Unassigned --</option>
+                    {eligibleUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.firstName} {u.lastName} (@{u.username}){u.id === currentUserId ? " (You)" : u.role === "ADMIN" ? " (Admin)" : ""}
+                      </option>
+                    ))}
+                  </select>
+
+                  {currentUserId && assignedUserId !== currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => setAssignedUserId(currentUserId)}
+                      className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <span>⚡ Assign to myself</span>
+                    </button>
+                  )}
+                </div>
+              ) : task.assignedUser ? (
                 <div className="mt-3 flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                     {task.assignedUser.firstName
@@ -316,7 +415,7 @@ export default function TaskModal({
                     type="button"
                     onClick={handleAssign}
                     disabled={assigning}
-                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold !text-white hover:bg-blue-700 disabled:opacity-60"
+                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer"
                   >
                     {assigning
                       ? "Assigning..."
@@ -325,14 +424,15 @@ export default function TaskModal({
                 </div>
               )}
 
-              {alreadyAssignedToMe && (
+              {alreadyAssignedToMe && !eligibleUsers.length && (
                 <p className="mt-3 text-xs font-medium text-green-600">
                   ✓ Assigned to you
                 </p>
               )}
 
               {!isUnassigned &&
-                !alreadyAssignedToMe && (
+                !alreadyAssignedToMe &&
+                !eligibleUsers.length && (
                   <p className="mt-3 text-xs text-gray-500">
                     This task is assigned to another user.
                   </p>
@@ -370,7 +470,7 @@ export default function TaskModal({
 
           {/* Actions */}
           <div className="flex items-center justify-between border-t border-gray-100 pt-5">
-            {isEditing ? (
+            {isEditing && onDelete ? (
               <button
                 type="button"
                 onClick={handleDelete}
