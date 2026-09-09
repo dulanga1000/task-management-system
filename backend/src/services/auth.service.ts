@@ -1,13 +1,36 @@
 import crypto from "crypto";
+
+import mongoose from "mongoose";
+
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
-import {hashPassword,comparePassword} from "../utils/password.js";
-import type {RegisterInput,LoginInput} from "../validations/auth.validation.js";
-import {generateAccessToken,generateRefreshToken,verifyRefreshToken} from "../utils/jwt.js";
+
+import {
+  hashPassword,
+  comparePassword,
+} from "../utils/password.js";
+
+import type {
+  RegisterInput,
+  LoginInput,
+} from "../validations/auth.validation.js";
+
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
+
 import { AppError } from "../utils/app-error.js";
+
 import { validateObjectId } from "../utils/validate-object-id.js";
 
-// Hash refresh token before storing it in database
+import { env } from "../config/env.js";
+
+// --------------------------------------------------
+// REFRESH TOKEN HASHING
+// --------------------------------------------------
+
 const hashRefreshToken = (
   token: string
 ): string => {
@@ -17,32 +40,67 @@ const hashRefreshToken = (
     .digest("hex");
 };
 
-// Calculate refresh token expiry date
+// --------------------------------------------------
+// REFRESH TOKEN EXPIRY
+// --------------------------------------------------
+
 const getRefreshTokenExpiry = (): Date => {
   const expiresIn =
-    process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+    env.jwtRefreshExpiresIn;
 
-  const days = parseInt(expiresIn);
+  const match =
+    expiresIn.match(/^(\d+)([smhd])$/);
 
-  const expiryDate = new Date();
+  if (!match) {
+    throw new Error(
+      "Invalid JWT_REFRESH_EXPIRES_IN format"
+    );
+  }
 
-  expiryDate.setDate(
-    expiryDate.getDate() + days
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  const milliseconds = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  }[unit as "s" | "m" | "h" | "d"];
+
+  return new Date(
+    Date.now() + value * milliseconds
   );
-
-  return expiryDate;
 };
 
-// Register a new user
+// --------------------------------------------------
+// GRACE PERIOD
+// --------------------------------------------------
+
+/*
+ * How long a just-rotated token is still
+ * accepted from concurrent requests that
+ * already held the old token.
+ */
+const GRACE_PERIOD_MS = 30 * 1000;
+
+
+// --------------------------------------------------
+// REGISTER
+// --------------------------------------------------
+
 export const registerUser = async (
   data: RegisterInput
 ) => {
-  const username = data.username.toLowerCase();
-  const email = data.email.toLowerCase();
+  const username =
+    data.username.toLowerCase();
 
-  const existingUsername = await User.findOne({
-    username,
-  });
+  const email =
+    data.email.toLowerCase();
+
+  const existingUsername =
+    await User.findOne({
+      username,
+    });
 
   if (existingUsername) {
     throw new AppError(
@@ -51,9 +109,10 @@ export const registerUser = async (
     );
   }
 
-  const existingUser = await User.findOne({
-    email,
-  });
+  const existingUser =
+    await User.findOne({
+      email,
+    });
 
   if (existingUser) {
     throw new AppError(
@@ -62,9 +121,8 @@ export const registerUser = async (
     );
   }
 
-  const hashedPassword = await hashPassword(
-    data.password
-  );
+  const hashedPassword =
+    await hashPassword(data.password);
 
   const user = await User.create({
     firstName: data.firstName,
@@ -75,25 +133,31 @@ export const registerUser = async (
   });
 
   return {
-    id: user._id,
+    id: user._id.toString(),
     firstName: user.firstName,
     lastName: user.lastName,
     username: user.username,
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 };
 
-// Login a user
+// --------------------------------------------------
+// LOGIN
+// --------------------------------------------------
+
 export const loginUser = async (
   data: LoginInput
 ) => {
-  const email = data.email.toLowerCase();
+  const email =
+    data.email.toLowerCase();
 
-  const user = await User.findOne({
-    email,
-  }).select("+password");
+  const user =
+    await User.findOne({
+      email,
+    }).select("+password");
 
   if (!user) {
     throw new AppError(
@@ -102,58 +166,65 @@ export const loginUser = async (
     );
   }
 
-  const isPasswordValid = await comparePassword(
-    data.password,
-    user.password
-  );
+  const passwordValid =
+    await comparePassword(
+      data.password,
+      user.password
+    );
 
-  if (!isPasswordValid) {
+  if (!passwordValid) {
     throw new AppError(
       "Invalid email or password",
       401
     );
   }
 
-  // Generate short-lived access token
-  const accessToken = generateAccessToken({
+  const payload = {
     userId: user._id.toString(),
     role: user.role,
-  });
+  };
 
-  // Generate long-lived refresh token
-  const refreshToken = generateRefreshToken({
-    userId: user._id.toString(),
-    role: user.role,
-  });
+  const accessToken =
+    generateAccessToken(payload);
 
-  // Hash refresh token before storing it
-  const hashedRefreshToken =
+  const refreshToken =
+    generateRefreshToken(payload);
+
+  const tokenHash =
     hashRefreshToken(refreshToken);
 
-  // Store refresh token in database
   await RefreshToken.create({
     user: user._id,
-    tokenHash: hashedRefreshToken,
-    expiresAt: getRefreshTokenExpiry(),
+    tokenHash,
+    familyId:
+      new mongoose.Types.ObjectId().toString(),
+    expiresAt:
+      getRefreshTokenExpiry(),
   });
 
   return {
     user: {
-      id: user._id,
+      id: user._id.toString(),
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
       email: user.email,
       role: user.role,
     },
+
     accessToken,
+
+    // Controller puts this into HttpOnly cookie.
     refreshToken,
   };
 };
 
-// Refresh access token
+// --------------------------------------------------
+// REFRESH ACCESS TOKEN
+// --------------------------------------------------
+
 export const refreshAccessToken = async (
-  refreshToken: string
+  refreshToken: string | undefined
 ) => {
   if (!refreshToken) {
     throw new AppError(
@@ -162,10 +233,15 @@ export const refreshAccessToken = async (
     );
   }
 
+  // ------------------------------------------------
+  // VERIFY JWT SIGNATURE
+  // ------------------------------------------------
+
   let payload;
 
   try {
-    payload = verifyRefreshToken(refreshToken);
+    payload =
+      verifyRefreshToken(refreshToken);
   } catch {
     throw new AppError(
       "Invalid or expired refresh token",
@@ -173,12 +249,25 @@ export const refreshAccessToken = async (
     );
   }
 
-  const hashedRefreshToken =
+  // ------------------------------------------------
+  // VALIDATE USER ID
+  // ------------------------------------------------
+
+  validateObjectId(
+    payload.userId,
+    "user ID"
+  );
+
+  // ------------------------------------------------
+  // FIND TOKEN IN DB
+  // ------------------------------------------------
+
+  const tokenHash =
     hashRefreshToken(refreshToken);
 
   const storedToken =
     await RefreshToken.findOne({
-      tokenHash: hashedRefreshToken,
+      tokenHash,
     });
 
   if (!storedToken) {
@@ -188,14 +277,116 @@ export const refreshAccessToken = async (
     );
   }
 
+  // ------------------------------------------------
+  // CASE 1: TOKEN ALREADY REVOKED
+  //
+  // Could be a concurrent legitimate request
+  // that lost the atomic race, or a genuine
+  // replay attack.
+  // ------------------------------------------------
+
   if (storedToken.revokedAt) {
-    throw new AppError(
-      "Refresh token has been revoked",
-      401
-    );
+    /*
+     * No replacedBy means this token was revoked
+     * without rotation (e.g. logout) or is a
+     * genuine replay attack.
+     */
+    if (!storedToken.replacedBy) {
+      throw new AppError(
+        "Refresh token has been revoked",
+        401
+      );
+    }
+
+    /*
+     * Check grace window.
+     */
+    const revokedAgo =
+      Date.now() -
+      storedToken.revokedAt.getTime();
+
+    if (revokedAgo > GRACE_PERIOD_MS) {
+      throw new AppError(
+        "Refresh token reuse detected",
+        401
+      );
+    }
+
+    /*
+     * Load the replacement token (R2).
+     */
+    const replacementToken =
+      await RefreshToken.findById(
+        storedToken.replacedBy
+      );
+
+    if (!replacementToken) {
+      throw new AppError(
+        "Invalid refresh token",
+        401
+      );
+    }
+
+    if (replacementToken.revokedAt) {
+      throw new AppError(
+        "Refresh token has been revoked",
+        401
+      );
+    }
+
+    if (
+      replacementToken.expiresAt.getTime() <=
+      Date.now()
+    ) {
+      throw new AppError(
+        "Refresh token has expired",
+        401
+      );
+    }
+
+    /*
+     * User must still exist.
+     */
+    const user =
+      await User.findById(
+        payload.userId
+      );
+
+    if (!user) {
+      throw new AppError(
+        "User not found",
+        404
+      );
+    }
+
+    /*
+     * Grace-window hit: return a fresh access
+     * token without touching the cookie.
+     * The browser already received R2 from
+     * the winning concurrent request.
+     */
+    const accessToken =
+      generateAccessToken({
+        userId: user._id.toString(),
+        role: user.role,
+      });
+
+    return {
+      accessToken,
+    };
   }
 
-  if (storedToken.expiresAt < new Date()) {
+  // ------------------------------------------------
+  // CASE 2: TOKEN IS ACTIVE — validate then rotate
+  // ------------------------------------------------
+
+  /*
+   * Expiry check before opening a transaction.
+   */
+  if (
+    storedToken.expiresAt.getTime() <=
+    Date.now()
+  ) {
     await RefreshToken.findByIdAndUpdate(
       storedToken._id,
       {
@@ -209,39 +400,244 @@ export const refreshAccessToken = async (
     );
   }
 
-  validateObjectId(
-    payload.userId,
-    "user ID"
-  );
-
-  const user = await User.findById(
-    payload.userId
-  );
+  /*
+   * User must still exist before we rotate.
+   */
+  const user =
+    await User.findById(
+      payload.userId
+    );
 
   if (!user) {
+    await RefreshToken.findByIdAndUpdate(
+      storedToken._id,
+      {
+        revokedAt: new Date(),
+      }
+    );
+
     throw new AppError(
       "User not found",
       404
     );
   }
 
-  const accessToken = generateAccessToken({
-    userId: user._id.toString(),
-    role: user.role,
-  });
+  // ------------------------------------------------
+  // ATOMIC ROTATION (MongoDB transaction)
+  //
+  // Only ONE concurrent request can win the
+  // atomic claim. The loser falls through to
+  // the grace-window path.
+  // ------------------------------------------------
 
-  return {
-    accessToken,
-  };
+  const session =
+    await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const now = new Date();
+
+    /*
+     * Atomic claim: match revokedAt: null so
+     * only the first concurrent request succeeds.
+     */
+    const claimedToken =
+      await RefreshToken.findOneAndUpdate(
+        {
+          _id: storedToken._id,
+          revokedAt: null,
+        },
+        {
+          $set: {
+            revokedAt: now,
+          },
+        },
+        {
+          new: false,
+          session,
+        }
+      );
+
+    /*
+     * This request lost the race — another
+     * concurrent request already revoked R1.
+     * Poll briefly for the winner to link R2.
+     */
+    if (!claimedToken) {
+      await session.abortTransaction();
+
+      let latestToken = null;
+
+      for (
+        let attempt = 0;
+        attempt < 2;
+        attempt++
+      ) {
+        latestToken =
+          await RefreshToken.findById(
+            storedToken._id
+          );
+
+        if (latestToken?.replacedBy) {
+          break;
+        }
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, 50)
+        );
+      }
+
+      if (
+        !latestToken ||
+        !latestToken.revokedAt ||
+        !latestToken.replacedBy
+      ) {
+        throw new AppError(
+          "Refresh token rotation failed",
+          401
+        );
+      }
+
+      const revokedAgo =
+        Date.now() -
+        latestToken.revokedAt.getTime();
+
+      if (revokedAgo > GRACE_PERIOD_MS) {
+        throw new AppError(
+          "Refresh token reuse detected",
+          401
+        );
+      }
+
+      const replacementToken =
+        await RefreshToken.findById(
+          latestToken.replacedBy
+        );
+
+      if (
+        !replacementToken ||
+        replacementToken.revokedAt
+      ) {
+        throw new AppError(
+          "Invalid refresh token",
+          401
+        );
+      }
+
+      if (
+        replacementToken.expiresAt.getTime() <=
+        Date.now()
+      ) {
+        throw new AppError(
+          "Refresh token has expired",
+          401
+        );
+      }
+
+      /*
+       * Grace-window access token — no cookie update.
+       */
+      const accessToken =
+        generateAccessToken({
+          userId: user._id.toString(),
+          role: user.role,
+        });
+
+      return {
+        accessToken,
+      };
+    }
+
+    // ----------------------------------------------
+    // WON THE RACE — create R2 and link R1 → R2
+    // ----------------------------------------------
+
+    const newRefreshToken =
+      generateRefreshToken({
+        userId: user._id.toString(),
+        role: user.role,
+      });
+
+    const newTokenHash =
+      hashRefreshToken(newRefreshToken);
+
+    /*
+     * Create R2 inside the transaction.
+     */
+    const newTokenDocs =
+      await RefreshToken.create(
+        [
+          {
+            user: user._id,
+            tokenHash: newTokenHash,
+            familyId: storedToken.familyId,
+            replacedBy: null,
+            expiresAt:
+              getRefreshTokenExpiry(),
+          },
+        ],
+        {
+          session,
+        }
+      );
+
+    /*
+     * Link R1 → R2 so grace-window requests
+     * can find the replacement.
+     */
+    await RefreshToken.findByIdAndUpdate(
+      storedToken._id,
+      {
+        replacedBy: newTokenDocs[0]!._id,
+      },
+      {
+        session,
+      }
+    );
+
+    await session.commitTransaction();
+
+    const accessToken =
+      generateAccessToken({
+        userId: user._id.toString(),
+        role: user.role,
+      });
+
+    return {
+      accessToken,
+
+      /*
+       * Controller sets a new HttpOnly cookie
+       * only when this field is present.
+       */
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+    throw error;
+  } finally {
+    await session.endSession();
+  }
 };
 
-// Get current user
+// --------------------------------------------------
+// CURRENT USER
+// --------------------------------------------------
+
 export const getCurrentUser = async (
   userId: string
 ) => {
-  validateObjectId(userId, "user ID");
+  validateObjectId(
+    userId,
+    "user ID"
+  );
 
-  const user = await User.findById(userId);
+  const user =
+    await User.findById(userId);
 
   if (!user) {
     throw new AppError(
@@ -251,7 +647,7 @@ export const getCurrentUser = async (
   }
 
   return {
-    id: user._id,
+    id: user._id.toString(),
     firstName: user.firstName,
     lastName: user.lastName,
     username: user.username,
@@ -262,23 +658,23 @@ export const getCurrentUser = async (
   };
 };
 
-// Logout a user
+// --------------------------------------------------
+// LOGOUT
+// --------------------------------------------------
+
 export const logoutUser = async (
-  refreshToken: string
+  refreshToken: string | undefined
 ): Promise<void> => {
   if (!refreshToken) {
-    throw new AppError(
-      "Refresh token is required",
-      401
-    );
+    return;
   }
 
-  const hashedRefreshToken =
+  const tokenHash =
     hashRefreshToken(refreshToken);
 
   await RefreshToken.findOneAndUpdate(
     {
-      tokenHash: hashedRefreshToken,
+      tokenHash,
       revokedAt: null,
     },
     {
