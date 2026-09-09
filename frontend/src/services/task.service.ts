@@ -7,9 +7,12 @@ import type {
   TasksResponse,
   UpdateTaskData,
 } from "@/types/task";
+import type { PaginationParams } from "@/types/pagination";
 
-export const getTasks = async () => {
-  const response = await api.get<TasksResponse>("/tasks");
+export const getTasks = async (params?: PaginationParams) => {
+  const response = await api.get<TasksResponse>("/tasks", {
+    params,
+  });
 
   return response.data;
 };

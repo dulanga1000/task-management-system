@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckSquare, Inbox } from "lucide-react";
+import { ArrowRight, Inbox } from "lucide-react";
 import type { Task, TaskStatus } from "@/types/task";
 import type { User } from "@/types/user";
+import type { PaginationMeta } from "@/types/pagination";
 import AdminTaskRow from "./AdminTaskRow";
 import ReassignTaskModal from "./ReassignTaskModal";
 import DeleteTaskConfirmModal from "./DeleteTaskConfirmModal";
+import Pagination from "@/components/ui/Pagination";
 
 interface AdminTaskTableProps {
   tasks: Task[];
@@ -15,6 +17,9 @@ interface AdminTaskTableProps {
   onReassignTask: (taskId: string, userId: string) => Promise<void>;
   onUpdateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   onDeleteTask: (taskId: string) => Promise<void>;
+  pagination?: PaginationMeta | null;
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
   title?: string;
   subtitle?: string;
   showViewAllLink?: boolean;
@@ -27,6 +32,9 @@ export default function AdminTaskTable({
   onReassignTask,
   onUpdateTaskStatus,
   onDeleteTask,
+  pagination,
+  onPageChange,
+  onLimitChange,
   title = "All System Tasks",
   subtitle = "Complete listing of tasks across all projects and users.",
   showViewAllLink = false,
@@ -52,7 +60,7 @@ export default function AdminTaskTable({
 
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+            {displayedTasks.length} {displayedTasks.length === 1 ? "task" : "tasks"}
           </span>
 
           {showViewAllLink && (
@@ -120,6 +128,16 @@ export default function AdminTaskTable({
           </table>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {pagination && onPageChange && displayedTasks.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          itemCount={displayedTasks.length}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
+      )}
 
       {/* Reassign Modal */}
       <ReassignTaskModal

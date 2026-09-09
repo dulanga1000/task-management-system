@@ -2,14 +2,19 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Users, Inbox } from "lucide-react";
+import { ArrowRight, Inbox } from "lucide-react";
 import type { User } from "@/types/user";
 import type { Task } from "@/types/task";
+import type { PaginationMeta } from "@/types/pagination";
 import AdminUserRow from "./AdminUserRow";
+import Pagination from "@/components/ui/Pagination";
 
 interface UserTableProps {
   users: User[];
   tasks?: Task[];
+  pagination?: PaginationMeta | null;
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
   title?: string;
   subtitle?: string;
   showViewAllLink?: boolean;
@@ -19,6 +24,9 @@ interface UserTableProps {
 export default function UserTable({
   users,
   tasks = [],
+  pagination,
+  onPageChange,
+  onLimitChange,
   title = "Registered Users",
   subtitle = "All accounts registered within this system workspace.",
   showViewAllLink = false,
@@ -52,7 +60,8 @@ export default function UserTable({
 
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-            {users.length} {users.length === 1 ? "user" : "users"}
+            {displayedUsers.length}{" "}
+            {displayedUsers.length === 1 ? "user" : "users"}
           </span>
 
           {showViewAllLink && (
@@ -78,7 +87,7 @@ export default function UserTable({
               No users found
             </p>
             <p className="mt-1 text-xs text-gray-400 max-w-xs">
-              No registered user accounts match your search query.
+              No registered user accounts match your criteria.
             </p>
           </div>
         ) : (
@@ -115,6 +124,16 @@ export default function UserTable({
           </table>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {pagination && onPageChange && displayedUsers.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          itemCount={displayedUsers.length}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
+      )}
     </section>
   );
 }

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Search, X, Shield, User as UserIcon } from "lucide-react";
+import { Users, Search, X } from "lucide-react";
 
 import useAuth from "@/hooks/useAuth";
 import useUsers from "@/hooks/useUsers";
 import useTasks from "@/hooks/useTasks";
+import useAdminStats from "@/hooks/useAdminStats";
 
 import AdminNavigation from "@/components/admin/AdminNavigation";
 import UserTable from "@/components/admin/UserTable";
@@ -17,9 +18,19 @@ export default function AdminUsersPage() {
 
   const {
     users,
+    pagination,
+    page,
+    setPage,
+    limit,
+    setLimit,
     loading: usersLoading,
     error: usersError,
   } = useUsers({
+    enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 10,
+  });
+
+  const { stats } = useAdminStats({
     enabled: !authLoading && user?.role === "ADMIN",
   });
 
@@ -29,6 +40,7 @@ export default function AdminUsersPage() {
     error: tasksError,
   } = useTasks({
     enabled: !authLoading && user?.role === "ADMIN",
+    initialLimit: 100, // Fetch tasks to accurately compute user workload badges
   });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,7 +60,7 @@ export default function AdminUsersPage() {
     }
   }, [authLoading, user, router]);
 
-  // Filter users by search query and role
+  // Client-side search & role filter on current page items
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       // 1. Search Query
@@ -74,6 +86,22 @@ export default function AdminUsersPage() {
     });
   }, [users, searchQuery, roleFilter]);
 
+  const isFiltered = searchQuery.trim() !== "" || roleFilter !== "ALL";
+
+  const effectivePagination = useMemo(() => {
+    if (isFiltered) {
+      return {
+        page: 1,
+        limit,
+        totalItems: filteredUsers.length,
+        totalPages: Math.ceil(filteredUsers.length / limit) || 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+    }
+    return pagination;
+  }, [isFiltered, filteredUsers.length, limit, pagination]);
+
   if (
     authLoading ||
     !user ||
@@ -93,9 +121,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  const adminCount = users.filter((u) => u.role === "ADMIN").length;
-  const standardUserCount = users.filter((u) => u.role === "USER").length;
-
+  const totalUsersCount = stats ? stats.totalUsers : pagination ? pagination.totalItems : users.length;
   const error = usersError || tasksError;
 
   return (
@@ -122,13 +148,7 @@ export default function AdminUsersPage() {
           {/* Quick Metrics */}
           <div className="flex items-center gap-2">
             <span className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs">
-              Total: {users.length}
-            </span>
-            <span className="rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700">
-              Admins: {adminCount}
-            </span>
-            <span className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-              Users: {standardUserCount}
+              Total Accounts: {totalUsersCount}
             </span>
           </div>
         </div>
@@ -148,7 +168,7 @@ export default function AdminUsersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search users by name, username, or email..."
+              placeholder="Search page users by name, username, or email..."
               className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-9 text-xs text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
             />
             {searchQuery && (
@@ -182,12 +202,15 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Directory Table */}
+        {/* Directory Table with Server Pagination */}
         <UserTable
           users={filteredUsers}
           tasks={tasks}
+          pagination={effectivePagination}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
           title="Registered Accounts"
-          subtitle="Full directory of user accounts and task distribution."
+          subtitle="Page-based directory of user accounts and workload allocation."
         />
       </div>
     </main>

@@ -41,6 +41,7 @@ export default function DashboardPage() {
     assignTask,
   } = useTasks({
     enabled: !authLoading && !!user,
+    initialLimit: 100,
   });
 
   const [showCreateModal, setShowCreateModal] =

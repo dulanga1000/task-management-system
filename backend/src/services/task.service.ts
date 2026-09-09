@@ -4,6 +4,14 @@ import {USER_ROLES,type UserRole} from "../constants/roles.js";
 import type {CreateTaskInput,UpdateTaskInput,AssignTaskInput} from "../validations/task.validation.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
+import {
+  parsePaginationParams,
+  buildPaginationMeta,
+} from "../utils/pagination.js";
+import type {
+  PaginationParams,
+  PaginationMeta,
+} from "../types/pagination.js";
 
 // Create a new task
 export const createTask = async (
@@ -20,18 +28,40 @@ export const createTask = async (
   return task;
 };
 
-// Get all tasks
-export const getTasks = async () => {
-  return Task.find()
-    .populate(
-      "creator",
-      "firstName lastName username email"
-    )
-    .populate(
-      "assignedUser",
-      "firstName lastName username email"
-    )
-    .sort({ createdAt: -1 });
+export interface GetTasksResult {
+  tasks: any[];
+  pagination: PaginationMeta;
+}
+
+// Get all tasks with server-side pagination
+export const getTasks = async (
+  params: PaginationParams = {}
+): Promise<GetTasksResult> => {
+  const { page, limit, skip } = parsePaginationParams(params);
+
+  const [tasks, totalItems] = await Promise.all([
+    Task.find()
+      .populate(
+        "creator",
+        "firstName lastName username email"
+      )
+      .populate(
+        "assignedUser",
+        "firstName lastName username email"
+      )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Task.countDocuments(),
+  ]);
+
+  const pagination = buildPaginationMeta(totalItems, page, limit);
+
+  return {
+    tasks,
+    pagination,
+  };
 };
 
 // Get a task by ID

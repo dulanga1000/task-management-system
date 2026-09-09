@@ -1,6 +1,6 @@
 import api from "./api";
-
 import type { User } from "@/types/user";
+import type { PaginationParams, PaginationMeta } from "@/types/pagination";
 
 interface ApiUser {
   _id: string;
@@ -18,6 +18,7 @@ export interface UsersResponse {
   message: string;
   data: {
     users: ApiUser[];
+    pagination?: PaginationMeta;
   };
 }
 
@@ -42,16 +43,16 @@ const normalizeUser = (
   updatedAt: user.updatedAt,
 });
 
-export const getUsers = async () => {
-  const response =
-    await api.get<UsersResponse>("/users");
+export const getUsers = async (params?: PaginationParams) => {
+  const response = await api.get<UsersResponse>("/users", {
+    params,
+  });
 
   return {
     ...response.data,
     data: {
-      users: response.data.data.users.map(
-        normalizeUser
-      ),
+      users: response.data.data.users.map(normalizeUser),
+      pagination: response.data.data.pagination,
     },
   };
 };

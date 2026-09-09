@@ -39,11 +39,14 @@ export interface AssignTaskData {
   assignedUserId: string;
 }
 
+import type { PaginationMeta } from "./pagination";
+
 export interface TasksResponse {
   success: boolean;
   message: string;
   data: {
     tasks: Task[];
+    pagination?: PaginationMeta;
   };
 }
 
