@@ -51,6 +51,11 @@ export const ChangePasswordForm: React.FC = () => {
       return;
     }
 
+    if (newPassword === currentPassword) {
+      setErrorMessage("New password cannot be the same as your current password.");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setErrorMessage("New passwords do not match.");
       return;

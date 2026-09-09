@@ -22,10 +22,9 @@ import {
 } from "../utils/jwt.js";
 
 import { AppError } from "../utils/app-error.js";
-
 import { validateObjectId } from "../utils/validate-object-id.js";
-
 import { env } from "../config/env.js";
+import { getPresignedFileUrl } from "../utils/storage.js";
 
 // --------------------------------------------------
 // REFRESH TOKEN HASHING
@@ -202,6 +201,22 @@ export const loginUser = async (
       getRefreshTokenExpiry(),
   });
 
+  let profilePicture = null;
+  if (user.profilePicture?.storageKey) {
+    try {
+      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      profilePicture = {
+        storageKey: user.profilePicture.storageKey,
+        mimeType: user.profilePicture.mimeType,
+        size: user.profilePicture.size,
+        updatedAt: user.profilePicture.updatedAt,
+        url,
+      };
+    } catch (err) {
+      console.error("Failed to generate presigned URL for profile picture:", err);
+    }
+  }
+
   return {
     user: {
       id: user._id.toString(),
@@ -210,6 +225,7 @@ export const loginUser = async (
       username: user.username,
       email: user.email,
       role: user.role,
+      profilePicture,
     },
 
     accessToken,
@@ -646,6 +662,22 @@ export const getCurrentUser = async (
     );
   }
 
+  let profilePicture = null;
+  if (user.profilePicture?.storageKey) {
+    try {
+      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      profilePicture = {
+        storageKey: user.profilePicture.storageKey,
+        mimeType: user.profilePicture.mimeType,
+        size: user.profilePicture.size,
+        updatedAt: user.profilePicture.updatedAt,
+        url,
+      };
+    } catch (err) {
+      console.error("Failed to generate presigned URL for profile picture:", err);
+    }
+  }
+
   return {
     id: user._id.toString(),
     firstName: user.firstName,
@@ -653,6 +685,7 @@ export const getCurrentUser = async (
     username: user.username,
     email: user.email,
     role: user.role,
+    profilePicture,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

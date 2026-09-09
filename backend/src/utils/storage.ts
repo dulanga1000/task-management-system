@@ -57,6 +57,19 @@ export const generateStorageKey = (
   return `tasks/${taskId}/${subFolder}/${uniqueFileName}`;
 };
 
+/**
+ * Generate a secure collision-resistant storage key for user profile pictures following:
+ * profile-pictures/{userId}/profile-{uniqueId}.{ext}
+ */
+export const generateProfilePictureKey = (
+  userId: string,
+  originalName: string
+): string => {
+  const ext = path.extname(originalName).toLowerCase() || ".jpg";
+  const uniqueId = crypto.randomBytes(4).toString("hex");
+  return `profile-pictures/${userId}/profile-${uniqueId}${ext}`;
+};
+
 let bucketVerified = false;
 
 /**
