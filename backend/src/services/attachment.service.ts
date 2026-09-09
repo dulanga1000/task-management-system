@@ -4,12 +4,7 @@ import { USER_ROLES, type UserRole } from "../constants/roles.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
 import { env } from "../config/env.js";
-import {
-  uploadToStorage,
-  deleteFromStorage,
-  generateStorageKey,
-  getPresignedFileUrl,
-} from "../utils/storage.js";
+import { uploadToStorage, deleteFromStorage, generateStorageKey, getPresignedFileUrl } from "../utils/storage.js";
 import { logActivity } from "./activity.service.js";
 
 export interface AttachmentResponseDto {
@@ -33,9 +28,8 @@ export interface AttachmentResponseDto {
   updatedAt: string;
 }
 
-/**
- * Upload an attachment (image or PDF) for a task
- */
+// Upload an attachment (image or PDF) for a task
+
 export const uploadAttachment = async (
   taskId: string,
   file: Express.Multer.File,
@@ -114,9 +108,8 @@ export const uploadAttachment = async (
   } as unknown as AttachmentResponseDto;
 };
 
-/**
- * Retrieve all attachments for a task
- */
+// Retrieve all attachments for a task
+
 export const getTaskAttachments = async (
   taskId: string
 ): Promise<AttachmentResponseDto[]> => {
@@ -154,9 +147,9 @@ export const getTaskAttachments = async (
   return attachmentsWithUrls as unknown as AttachmentResponseDto[];
 };
 
-/**
- * Delete an attachment from Supabase Storage and MongoDB
- */
+
+// Delete an attachment from Supabase Storage and MongoDB
+
 export const deleteTaskAttachment = async (
   taskId: string,
   attachmentId: string,

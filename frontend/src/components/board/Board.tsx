@@ -1,22 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  DndContext,
-  DragOverlay,
-  pointerWithin,
-  rectIntersection,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  CollisionDetection,
-} from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-
+import {DndContext,DragOverlay,pointerWithin,rectIntersection,closestCorners,KeyboardSensor,PointerSensor,useSensor,useSensors,DragStartEvent,DragEndEvent,CollisionDetection} from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { Task, TaskStatus, UpdateTaskData } from "@/types/task";
 import BoardColumn from "./BoardColumn";
 import TaskCard from "./TaskCard";
@@ -26,6 +12,10 @@ interface BoardProps {
   onTaskClick: (task: Task) => void;
   onTaskUpdate?: (taskId: string, data: UpdateTaskData) => Promise<void>;
   onTaskAssign?: (taskId: string) => Promise<void>;
+  onReorderTasks?: (tasks: Task[]) => Promise<void> | void;
+  onError?: (message: string) => void;
+  currentUserId?: string;
+  isAdmin?: boolean;
 }
 
 const columns: {
@@ -51,6 +41,10 @@ export default function Board({
   onTaskClick,
   onTaskUpdate,
   onTaskAssign,
+  onReorderTasks,
+  onError,
+  currentUserId,
+  isAdmin = false,
 }: BoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
@@ -64,6 +58,14 @@ export default function Board({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const canDragTask = (task: Task) => {
+    if (isAdmin) return true;
+    const assignedId =
+      task.assignedUser?._id ||
+      (typeof task.assignedUser === "string" ? task.assignedUser : null);
+    return !!currentUserId && assignedId === currentUserId;
+  };
 
   // Multi-container collision detection strategy
   const customCollisionDetection: CollisionDetection = (args) => {
@@ -88,7 +90,8 @@ export default function Board({
     const task =
       tasks.find((t) => t._id === active.id) ||
       (active.data.current?.task as Task | undefined);
-    setActiveTask(task || null);
+    if (!task) return;
+    setActiveTask(task);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -109,27 +112,70 @@ export default function Board({
 
     if (!currentTask) return;
 
+    if (!canDragTask(currentTask)) {
+      // Revert automatically to original place & alert user visibly
+      onError?.("You do not have permission to update this task");
+      return;
+    }
+
     // Resolve target status:
     // Case 1: overId is a column status ("TODO" | "DOING" | "DONE")
     // Case 2: over.data.current is a Column
     // Case 3: overId is another task id or over.data.current is a Task
     let targetStatus: TaskStatus | null = null;
+    let overTask: Task | null = null;
 
     if (["TODO", "DOING", "DONE"].includes(overId)) {
       targetStatus = overId as TaskStatus;
     } else if (over.data.current?.type === "Column") {
       targetStatus = over.data.current.status as TaskStatus;
     } else {
-      const overTask =
+      overTask =
         tasks.find((t) => t._id === overId) ||
-        (over.data.current?.task as Task | undefined);
+        (over.data.current?.task as Task | undefined) ||
+        null;
       if (overTask) {
         targetStatus = overTask.status;
       }
     }
 
-    // If status changed and update handler exists, trigger update
-    if (targetStatus && currentTask.status !== targetStatus && onTaskUpdate) {
+    if (!targetStatus) return;
+
+    // SCENARIO 1: Same column reorder (dragging up / down within same column)
+    if (currentTask.status === targetStatus) {
+      if (overTask && overTask._id !== currentTask._id) {
+        const oldIndex = tasks.findIndex((t) => t._id === activeId);
+        const newIndex = tasks.findIndex((t) => t._id === overId);
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          const reordered = arrayMove(tasks, oldIndex, newIndex);
+          await onReorderTasks?.(reordered);
+        }
+      }
+      return;
+    }
+
+    // SCENARIO 2: Cross column move (status changed)
+    const updatedTask = { ...currentTask, status: targetStatus };
+    const remainingTasks = tasks.filter((t) => t._id !== activeId);
+
+    let newTasks: Task[];
+    if (overTask) {
+      const overIndex = remainingTasks.findIndex((t) => t._id === overId);
+      if (overIndex !== -1) {
+        remainingTasks.splice(overIndex, 0, updatedTask);
+        newTasks = remainingTasks;
+      } else {
+        newTasks = [...remainingTasks, updatedTask];
+      }
+    } else {
+      newTasks = [...remainingTasks, updatedTask];
+    }
+
+    // Update order locally & persist
+    await onReorderTasks?.(newTasks);
+
+    // Trigger status update
+    if (onTaskUpdate) {
       await onTaskUpdate(activeId, { status: targetStatus });
     }
   };
@@ -150,6 +196,8 @@ export default function Board({
             tasks={tasks.filter((task) => task.status === column.status)}
             onTaskClick={onTaskClick}
             onTaskAssign={onTaskAssign}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
           />
         ))}
       </div>

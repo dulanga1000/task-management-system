@@ -10,12 +10,14 @@ interface SortableTaskProps {
   task: Task;
   onTaskClick: (task: Task) => void;
   onTaskAssign?: (taskId: string) => void;
+  canDrag?: boolean;
 }
 
 export default function SortableTask({
   task,
   onTaskClick,
   onTaskAssign,
+  canDrag = true,
 }: SortableTaskProps) {
   const {
     attributes,
@@ -48,6 +50,7 @@ export default function SortableTask({
       <TaskCard
         task={task}
         isDragging={isDragging}
+        canDrag={canDrag}
         onClick={() => onTaskClick(task)}
         onAssign={onTaskAssign ? () => onTaskAssign(task._id) : undefined}
       />

@@ -22,9 +22,9 @@ const ALLOWED_EXTENSIONS = new Set([
   ".pdf",
 ]);
 
-/**
- * Verify file magic bytes / signature against declared MIME type
- */
+
+// Verify file magic bytes / signature against declared MIME type
+
 export const verifyFileMagicBytes = (
   buffer: Buffer,
   mimeType: string
@@ -110,9 +110,8 @@ const multerUpload = multer({
   },
 });
 
-/**
- * Express middleware wrapper for file upload with strict magic byte and size enforcement
- */
+// Express middleware wrapper for file upload with strict magic byte and size enforcement
+
 export const uploadAttachmentFile = (
   req: Request,
   res: Response,
@@ -180,9 +179,11 @@ const ALLOWED_PROFILE_IMAGE_EXTS = new Set([
 ]);
 
 /**
- * Express middleware wrapper for profile picture upload:
- * Strictly restricts to image formats (JPG, PNG, WEBP), max 5 MB, and verifies magic bytes.
+ * Handles profile picture uploads.
+ * Only allows JPG, PNG, and WEBP images up to 5 MB,
+ * and validates the file signature to make sure it's a real image.
  */
+
 export const uploadProfilePictureFile = (
   req: Request,
   res: Response,

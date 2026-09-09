@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
 import { changeMyPassword } from "@/services/user.service";
 import { Check, X, ShieldCheck } from "lucide-react";
 
 export const ChangePasswordForm: React.FC = () => {
+  const router = useRouter();
+  const { logout } = useAuth();
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -12,6 +17,7 @@ export const ChangePasswordForm: React.FC = () => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isNewPasswordFocused, setIsNewPasswordFocused] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -93,10 +99,14 @@ export const ChangePasswordForm: React.FC = () => {
         confirmPassword,
       });
 
-      setSuccessMessage("Password changed successfully.");
+      setSuccessMessage("Password changed successfully. Redirecting to sign in...");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+
+      // Secure logout cleanup across sessions and redirect to login
+      await logout("password_changed");
+      router.replace("/login?reason=password_changed");
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -198,6 +208,8 @@ export const ChangePasswordForm: React.FC = () => {
               required
               disabled={loading}
               value={newPassword}
+              onFocus={() => setIsNewPasswordFocused(true)}
+              onBlur={() => setIsNewPasswordFocused(false)}
               onChange={(e) => {
                 setNewPassword(e.target.value);
                 setErrorMessage(null);
@@ -228,93 +240,95 @@ export const ChangePasswordForm: React.FC = () => {
             </div>
           )}
 
-          {/* Live Password Conditions Checklist */}
-          <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-2 text-xs">
-            <p className="font-semibold text-gray-700 text-[11px] uppercase tracking-wider mb-2">
-              Password Requirements
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div
-                className={`flex items-center gap-1.5 transition-colors ${
-                  hasMinLength ? "text-emerald-700 font-semibold" : "text-gray-500"
-                }`}
-              >
-                {hasMinLength ? (
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
-                )}
-                <span>At least 8 characters</span>
-              </div>
-
-              <div
-                className={`flex items-center gap-1.5 transition-colors ${
-                  hasUppercase ? "text-emerald-700 font-semibold" : "text-gray-500"
-                }`}
-              >
-                {hasUppercase ? (
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
-                )}
-                <span>One uppercase letter (A-Z)</span>
-              </div>
-
-              <div
-                className={`flex items-center gap-1.5 transition-colors ${
-                  hasLowercase ? "text-emerald-700 font-semibold" : "text-gray-500"
-                }`}
-              >
-                {hasLowercase ? (
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
-                )}
-                <span>One lowercase letter (a-z)</span>
-              </div>
-
-              <div
-                className={`flex items-center gap-1.5 transition-colors ${
-                  hasNumber ? "text-emerald-700 font-semibold" : "text-gray-500"
-                }`}
-              >
-                {hasNumber ? (
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
-                )}
-                <span>At least one number (0-9)</span>
-              </div>
-
-              <div
-                className={`flex items-center gap-1.5 transition-colors ${
-                  hasSpecial ? "text-emerald-700 font-semibold" : "text-gray-500"
-                }`}
-              >
-                {hasSpecial ? (
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
-                )}
-                <span>One special character (!@#$)</span>
-              </div>
-
-              {currentPassword && newPassword && (
+          {/* Live Password Conditions Checklist - Only shown on focus or when typing */}
+          {(isNewPasswordFocused || newPassword.length > 0) && (
+            <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-2 text-xs animate-in fade-in duration-150">
+              <p className="font-semibold text-gray-700 text-[11px] uppercase tracking-wider mb-2">
+                Password Requirements
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    isDifferentFromCurrent ? "text-emerald-700 font-semibold" : "text-rose-600 font-semibold"
+                    hasMinLength ? "text-emerald-700 font-semibold" : "text-gray-500"
                   }`}
                 >
-                  {isDifferentFromCurrent ? (
+                  {hasMinLength ? (
                     <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <X className="w-4 h-4 text-rose-500 shrink-0 stroke-[2.5]" />
+                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
                   )}
-                  <span>Different from current password</span>
+                  <span>At least 8 characters</span>
                 </div>
-              )}
+
+                <div
+                  className={`flex items-center gap-1.5 transition-colors ${
+                    hasUppercase ? "text-emerald-700 font-semibold" : "text-gray-500"
+                  }`}
+                >
+                  {hasUppercase ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                  )}
+                  <span>One uppercase letter (A-Z)</span>
+                </div>
+
+                <div
+                  className={`flex items-center gap-1.5 transition-colors ${
+                    hasLowercase ? "text-emerald-700 font-semibold" : "text-gray-500"
+                  }`}
+                >
+                  {hasLowercase ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                  )}
+                  <span>One lowercase letter (a-z)</span>
+                </div>
+
+                <div
+                  className={`flex items-center gap-1.5 transition-colors ${
+                    hasNumber ? "text-emerald-700 font-semibold" : "text-gray-500"
+                  }`}
+                >
+                  {hasNumber ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                  )}
+                  <span>At least one number (0-9)</span>
+                </div>
+
+                <div
+                  className={`flex items-center gap-1.5 transition-colors ${
+                    hasSpecial ? "text-emerald-700 font-semibold" : "text-gray-500"
+                  }`}
+                >
+                  {hasSpecial ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                  )}
+                  <span>One special character (!@#$)</span>
+                </div>
+
+                {currentPassword && newPassword && (
+                  <div
+                    className={`flex items-center gap-1.5 transition-colors ${
+                      isDifferentFromCurrent ? "text-emerald-700 font-semibold" : "text-rose-600 font-semibold"
+                    }`}
+                  >
+                    {isDifferentFromCurrent ? (
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    ) : (
+                      <X className="w-4 h-4 text-rose-500 shrink-0 stroke-[2.5]" />
+                    )}
+                    <span>Different from current password</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Confirm New Password */}

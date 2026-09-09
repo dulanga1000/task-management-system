@@ -1,9 +1,6 @@
 import api from "./api";
 
-import type {
-  LoginData,
-  RegisterData,
-} from "@/types/auth";
+import type {LoginData,RegisterData} from "@/types/auth";
 
 export interface LoginResponse {
   success: boolean;

@@ -69,6 +69,7 @@ export const updateTaskSchema = z.object({
   labels: z.array(labelSchema).optional(),
   dueDate: z.string().datetime().nullable().optional(),
   checklist: z.array(checklistItemSchema).optional(),
+  order: z.number().optional(),
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
@@ -81,3 +82,17 @@ export const assignTaskSchema = z.object({
 });
 
 export type AssignTaskInput = z.infer<typeof assignTaskSchema>;
+
+// Reorder tasks schema
+export const reorderTasksSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        taskId: z.string().min(1, { error: "Task ID is required" }),
+        order: z.number(),
+      })
+    )
+    .min(1, { error: "Items array cannot be empty" }),
+});
+
+export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>;

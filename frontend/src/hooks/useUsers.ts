@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  getUsers,
-  getUserById,
-  updateUser as updateUserApi,
-  deleteUser as deleteUserApi,
-} from "@/services/user.service";
+import {getUsers,getUserById,updateUser as updateUserApi,deleteUser as deleteUserApi} from "@/services/user.service";
 import type { User, UpdateUserData } from "@/types/user";
 import type { PaginationMeta } from "@/types/pagination";
 

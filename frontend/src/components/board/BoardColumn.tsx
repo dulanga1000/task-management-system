@@ -4,7 +4,6 @@ import React, { useMemo } from "react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { CheckCircle2, Clock, Circle } from "lucide-react";
-
 import type { Task, TaskStatus } from "@/types/task";
 import SortableTask from "./SortableTask";
 
@@ -14,6 +13,8 @@ interface BoardColumnProps {
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   onTaskAssign?: (taskId: string) => void;
+  currentUserId?: string;
+  isAdmin?: boolean;
 }
 
 const statusConfig = {
@@ -46,6 +47,8 @@ export default function BoardColumn({
   tasks,
   onTaskClick,
   onTaskAssign,
+  currentUserId,
+  isAdmin = false,
 }: BoardColumnProps) {
   const config = statusConfig[status];
   const Icon = config.icon;
@@ -95,14 +98,26 @@ export default function BoardColumn({
               </p>
             </div>
           ) : (
-            tasks.map((task) => (
-              <SortableTask
-                key={task._id}
-                task={task}
-                onTaskClick={onTaskClick}
-                onTaskAssign={onTaskAssign}
-              />
-            ))
+            tasks.map((task) => {
+              const assignedId =
+                task.assignedUser?._id ||
+                (typeof task.assignedUser === "string"
+                  ? task.assignedUser
+                  : null);
+              const isAssignedToCurrentUser =
+                !!currentUserId && assignedId === currentUserId;
+              const canDrag = isAdmin || isAssignedToCurrentUser;
+
+              return (
+                <SortableTask
+                  key={task._id}
+                  task={task}
+                  canDrag={canDrag}
+                  onTaskClick={onTaskClick}
+                  onTaskAssign={onTaskAssign}
+                />
+              );
+            })
           )}
         </SortableContext>
       </div>

@@ -1,8 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import {
-  getTaskActivities,
-  addTaskComment,
-} from "../services/activity.service.js";
+import { getTaskActivities, addTaskComment } from "../services/activity.service.js";
 
 export const getActivities = async (
   req: Request,

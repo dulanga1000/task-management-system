@@ -1,34 +1,16 @@
 import crypto from "crypto";
-
 import mongoose from "mongoose";
-
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
-
-import {
-  hashPassword,
-  comparePassword,
-} from "../utils/password.js";
-
-import type {
-  RegisterInput,
-  LoginInput,
-} from "../validations/auth.validation.js";
-
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyRefreshToken,
-} from "../utils/jwt.js";
-
+import { hashPassword, comparePassword } from "../utils/password.js";
+import type { RegisterInput, LoginInput } from "../validations/auth.validation.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
 import { env } from "../config/env.js";
 import { getPresignedFileUrl } from "../utils/storage.js";
 
-// --------------------------------------------------
 // REFRESH TOKEN HASHING
-// --------------------------------------------------
 
 const hashRefreshToken = (
   token: string
@@ -39,9 +21,7 @@ const hashRefreshToken = (
     .digest("hex");
 };
 
-// --------------------------------------------------
 // REFRESH TOKEN EXPIRY
-// --------------------------------------------------
 
 const getRefreshTokenExpiry = (): Date => {
   const expiresIn =
@@ -71,9 +51,7 @@ const getRefreshTokenExpiry = (): Date => {
   );
 };
 
-// --------------------------------------------------
 // GRACE PERIOD
-// --------------------------------------------------
 
 /*
  * How long a just-rotated token is still
@@ -82,10 +60,7 @@ const getRefreshTokenExpiry = (): Date => {
  */
 const GRACE_PERIOD_MS = 30 * 1000;
 
-
-// --------------------------------------------------
 // REGISTER
-// --------------------------------------------------
 
 export const registerUser = async (
   data: RegisterInput
@@ -143,9 +118,7 @@ export const registerUser = async (
   };
 };
 
-// --------------------------------------------------
 // LOGIN
-// --------------------------------------------------
 
 export const loginUser = async (
   data: LoginInput
@@ -235,9 +208,7 @@ export const loginUser = async (
   };
 };
 
-// --------------------------------------------------
 // REFRESH ACCESS TOKEN
-// --------------------------------------------------
 
 export const refreshAccessToken = async (
   refreshToken: string | undefined
@@ -249,9 +220,7 @@ export const refreshAccessToken = async (
     );
   }
 
-  // ------------------------------------------------
   // VERIFY JWT SIGNATURE
-  // ------------------------------------------------
 
   let payload;
 
@@ -265,18 +234,14 @@ export const refreshAccessToken = async (
     );
   }
 
-  // ------------------------------------------------
   // VALIDATE USER ID
-  // ------------------------------------------------
 
   validateObjectId(
     payload.userId,
     "user ID"
   );
 
-  // ------------------------------------------------
   // FIND TOKEN IN DB
-  // ------------------------------------------------
 
   const tokenHash =
     hashRefreshToken(refreshToken);
@@ -293,13 +258,13 @@ export const refreshAccessToken = async (
     );
   }
 
-  // ------------------------------------------------
+
   // CASE 1: TOKEN ALREADY REVOKED
   //
   // Could be a concurrent legitimate request
   // that lost the atomic race, or a genuine
   // replay attack.
-  // ------------------------------------------------
+
 
   if (storedToken.revokedAt) {
     /*
@@ -314,9 +279,9 @@ export const refreshAccessToken = async (
       );
     }
 
-    /*
-     * Check grace window.
-     */
+
+    // Check grace window.
+
     const revokedAgo =
       Date.now() -
       storedToken.revokedAt.getTime();
@@ -328,9 +293,8 @@ export const refreshAccessToken = async (
       );
     }
 
-    /*
-     * Load the replacement token (R2).
-     */
+    // Load the replacement token (R2).
+
     const replacementToken =
       await RefreshToken.findById(
         storedToken.replacedBy
@@ -360,9 +324,8 @@ export const refreshAccessToken = async (
       );
     }
 
-    /*
-     * User must still exist.
-     */
+    // User must still exist.
+
     const user =
       await User.findById(
         payload.userId
@@ -392,13 +355,10 @@ export const refreshAccessToken = async (
     };
   }
 
-  // ------------------------------------------------
   // CASE 2: TOKEN IS ACTIVE — validate then rotate
-  // ------------------------------------------------
 
-  /*
-   * Expiry check before opening a transaction.
-   */
+  // Expiry check before opening a transaction.
+
   if (
     storedToken.expiresAt.getTime() <=
     Date.now()
@@ -416,9 +376,8 @@ export const refreshAccessToken = async (
     );
   }
 
-  /*
-   * User must still exist before we rotate.
-   */
+  // User must still exist before we rotate.
+
   const user =
     await User.findById(
       payload.userId
@@ -438,13 +397,11 @@ export const refreshAccessToken = async (
     );
   }
 
-  // ------------------------------------------------
   // ATOMIC ROTATION (MongoDB transaction)
   //
   // Only ONE concurrent request can win the
   // atomic claim. The loser falls through to
   // the grace-window path.
-  // ------------------------------------------------
 
   const session =
     await mongoose.startSession();
@@ -565,9 +522,7 @@ export const refreshAccessToken = async (
       };
     }
 
-    // ----------------------------------------------
     // WON THE RACE — create R2 and link R1 → R2
-    // ----------------------------------------------
 
     const newRefreshToken =
       generateRefreshToken({
@@ -578,9 +533,8 @@ export const refreshAccessToken = async (
     const newTokenHash =
       hashRefreshToken(newRefreshToken);
 
-    /*
-     * Create R2 inside the transaction.
-     */
+    // Create R2 inside the transaction.
+
     const newTokenDocs =
       await RefreshToken.create(
         [
@@ -598,10 +552,9 @@ export const refreshAccessToken = async (
         }
       );
 
-    /*
-     * Link R1 → R2 so grace-window requests
-     * can find the replacement.
-     */
+    // Link R1 → R2 so grace-window requests
+    // can find the replacement.
+
     await RefreshToken.findByIdAndUpdate(
       storedToken._id,
       {
@@ -640,9 +593,7 @@ export const refreshAccessToken = async (
   }
 };
 
-// --------------------------------------------------
 // CURRENT USER
-// --------------------------------------------------
 
 export const getCurrentUser = async (
   userId: string
@@ -691,9 +642,7 @@ export const getCurrentUser = async (
   };
 };
 
-// --------------------------------------------------
 // LOGOUT
-// --------------------------------------------------
 
 export const logoutUser = async (
   refreshToken: string | undefined

@@ -1,37 +1,21 @@
 import User, { type IUser } from "../models/User.js";
+import RefreshToken from "../models/RefreshToken.js";
 import Task from "../models/Task.js";
 import { USER_ROLES } from "../constants/roles.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
-import {
-  parsePaginationParams,
-  buildPaginationMeta,
-} from "../utils/pagination.js";
-import type {
-  PaginationParams,
-  PaginationMeta,
-} from "../types/pagination.js";
-import type {
-  UpdateUserInput,
-  UpdateProfileInput,
-  ChangePasswordInput,
-} from "../validations/user.validation.js";
+import { parsePaginationParams, buildPaginationMeta } from "../utils/pagination.js";
+import type { PaginationParams, PaginationMeta } from "../types/pagination.js";
+import type { UpdateUserInput, UpdateProfileInput, ChangePasswordInput } from "../validations/user.validation.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
-import {
-  uploadToStorage,
-  deleteFromStorage,
-  generateProfilePictureKey,
-  getPresignedFileUrl,
-} from "../utils/storage.js";
+import { uploadToStorage, deleteFromStorage, generateProfilePictureKey, getPresignedFileUrl } from "../utils/storage.js";
 
 export interface GetUsersResult {
   users: Omit<IUser, "password">[];
   pagination: PaginationMeta;
 }
 
-/**
- * Helper to populate user's profile picture with a short-lived presigned URL
- */
+// Helper to populate user's profile picture with a short-lived presigned URL
 export const populateProfilePictureUrl = async (userDoc: any) => {
   if (!userDoc) return null;
   const user = typeof userDoc.toObject === "function" ? userDoc.toObject() : { ...userDoc };
@@ -292,6 +276,17 @@ export const changePassword = async (
   // Hash new password and save
   user.password = await hashPassword(data.newPassword);
   await user.save();
+
+  // Revoke all active refresh token sessions for this user across all devices
+  await RefreshToken.updateMany(
+    {
+      user: user._id,
+      revokedAt: null,
+    },
+    {
+      revokedAt: new Date(),
+    }
+  );
 
   return { message: "Password changed successfully" };
 };

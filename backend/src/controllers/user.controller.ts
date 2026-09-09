@@ -1,14 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import {
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  updateProfile,
-  changePassword as changeUserPassword,
-  uploadUserProfilePicture,
-  deleteUserProfilePicture,
-} from "../services/user.service.js";
+import { getUsers, getUserById, updateUser, deleteUser, updateProfile, changePassword as changeUserPassword, uploadUserProfilePicture, deleteUserProfilePicture } from "../services/user.service.js";
+import { getRefreshCookieOptions } from "./auth.controller.js";
 
 // Get all users with optional pagination
 export const getAll = async (
@@ -135,6 +127,8 @@ export const changePassword = async (
 ): Promise<void> => {
   try {
     const result = await changeUserPassword(req.user!.userId, req.body);
+
+    res.clearCookie("refreshToken", getRefreshCookieOptions());
 
     res.status(200).json({
       success: true,

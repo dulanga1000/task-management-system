@@ -1,5 +1,5 @@
 import type { Request,Response,NextFunction} from "express";
-import {createTask,getTasks,getTaskById,updateTask,assignTask,deleteTask} from "../services/task.service.js";
+import {createTask,getTasks,getTaskById,updateTask,assignTask,deleteTask,reorderTasks} from "../services/task.service.js";
 
 // Create a new task
 export const create = async (
@@ -213,6 +213,34 @@ export const remove = async (
     res.status(200).json({
       success: true,
       message: "Task deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reorder tasks
+export const reorder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+
+      return;
+    }
+
+    const { items } = req.body;
+    await reorderTasks(items, req.user.userId, req.user.role);
+
+    res.status(200).json({
+      success: true,
+      message: "Tasks reordered successfully",
     });
   } catch (error) {
     next(error);

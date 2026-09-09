@@ -1,14 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type {
-  CreateTaskData,
-  Task,
-  TaskStatus,
-  UpdateTaskData,
-  TaskLabel,
-  TaskChecklistItem,
-} from "@/types/task";
+import type {CreateTaskData,Task,TaskStatus,UpdateTaskData,TaskLabel,TaskChecklistItem} from "@/types/task";
 import type { User } from "@/types/user";
 import useAuth from "@/hooks/useAuth";
 import { AttachmentSection } from "./AttachmentSection";
@@ -44,6 +37,7 @@ interface TaskModalProps {
 
   currentUserId?: string;
   users?: User[];
+  onAttachmentChange?: () => void;
 }
 
 export default function TaskModal({
@@ -56,6 +50,7 @@ export default function TaskModal({
   onAssign,
   currentUserId,
   users,
+  onAttachmentChange,
 }: TaskModalProps) {
   const { user: currentUser } = useAuth();
   const effectiveUserId = currentUserId || currentUser?.id;
@@ -767,7 +762,10 @@ export default function TaskModal({
                     task.creator?._id === effectiveUserId ||
                     task.assignedUser?._id === effectiveUserId
                   }
-                  onAttachmentChange={() => setActivityRefreshKey((k) => k + 1)}
+                  onAttachmentChange={() => {
+                    setActivityRefreshKey((k) => k + 1);
+                    onAttachmentChange?.();
+                  }}
                 />
 
                 {/* Metadata & Actions */}

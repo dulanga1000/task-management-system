@@ -32,6 +32,9 @@ export interface Task {
   labels?: TaskLabel[];
   dueDate?: string | null;
   checklist?: TaskChecklistItem[];
+  attachmentCount?: number;
+  coverImageUrl?: string | null;
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +54,12 @@ export interface UpdateTaskData {
   labels?: TaskLabel[];
   dueDate?: string | null;
   checklist?: TaskChecklistItem[];
+  order?: number;
+}
+
+export interface ReorderItem {
+  taskId: string;
+  order: number;
 }
 
 export interface AssignTaskData {

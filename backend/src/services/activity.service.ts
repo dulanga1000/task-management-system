@@ -25,9 +25,9 @@ export const logActivity = async (
   }
 };
 
-/**
- * Fetch all activities/audit events for a specific task.
- */
+
+// Fetch all activities/audit events for a specific task.
+
 export const getTaskActivities = async (taskId: string) => {
   validateObjectId(taskId, "task ID");
 
@@ -44,9 +44,9 @@ export const getTaskActivities = async (taskId: string) => {
   return activities;
 };
 
-/**
- * Add a user comment to a task activity stream.
- */
+
+// Add a user comment to a task activity stream.
+
 export const addTaskComment = async (
   taskId: string,
   userId: string,

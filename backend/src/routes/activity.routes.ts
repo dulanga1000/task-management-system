@@ -1,8 +1,5 @@
 import { Router } from "express";
-import {
-  getActivities,
-  postComment,
-} from "../controllers/activity.controller.js";
+import { getActivities, postComment } from "../controllers/activity.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router({ mergeParams: true });

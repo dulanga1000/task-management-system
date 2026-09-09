@@ -29,6 +29,7 @@ export interface ITask extends Document {
   labels: ITaskLabel[];
   dueDate: Date | null;
   checklist: ITaskChecklistItem[];
+  order: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -92,6 +93,11 @@ const taskSchema = new Schema<ITask>(
         },
       ],
       default: [],
+    },
+
+    order: {
+      type: Number,
+      default: 0,
     },
   },
   {

@@ -1,24 +1,10 @@
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
-
-import {
-  getCurrentUser,
-  loginUser,
-  registerUser,
-  refreshAccessToken,
-  logoutUser,
-} from "../services/auth.service.js";
-
+import type { Request, Response, NextFunction, } from "express";
+import { getCurrentUser, loginUser, registerUser, refreshAccessToken, logoutUser } from "../services/auth.service.js";
 import { env } from "../config/env.js";
 
-// --------------------------------------------------
 // COOKIE OPTIONS
-// --------------------------------------------------
 
-const getRefreshCookieOptions = () => ({
+export const getRefreshCookieOptions = () => ({
   httpOnly: true,
 
   secure:
@@ -33,9 +19,7 @@ const getRefreshCookieOptions = () => ({
   path: "/api/auth",
 });
 
-// --------------------------------------------------
 // REGISTER
-// --------------------------------------------------
 
 export const register = async (
   req: Request,
@@ -57,9 +41,7 @@ export const register = async (
   }
 };
 
-// --------------------------------------------------
 // LOGIN
-// --------------------------------------------------
 
 export const login = async (
   req: Request,
@@ -90,9 +72,7 @@ export const login = async (
   }
 };
 
-// --------------------------------------------------
 // REFRESH
-// --------------------------------------------------
 
 export const refresh = async (
   req: Request,
@@ -109,12 +89,11 @@ export const refresh = async (
       );
 
     /*
-     * Normal rotation: set the new refresh token
-     * cookie. Grace-window hits return only an
-     * access token, so we skip the cookie update
-     * to preserve the R2 cookie the winning
-     * request already set.
+     * Set the new refresh token cookie during normal rotation.
+     * Grace-window requests only return an access token, so
+     * leave the existing cookie set by the winning request.
      */
+
     if (result.refreshToken) {
       res.cookie(
         "refreshToken",
@@ -137,9 +116,7 @@ export const refresh = async (
   }
 };
 
-// --------------------------------------------------
 // GET CURRENT USER
-// --------------------------------------------------
 
 export const getMe = async (
   req: Request,
@@ -173,9 +150,7 @@ export const getMe = async (
   }
 };
 
-// --------------------------------------------------
 // LOGOUT
-// --------------------------------------------------
 
 export const logout = async (
   req: Request,

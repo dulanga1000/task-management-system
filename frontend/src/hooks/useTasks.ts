@@ -1,25 +1,8 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  getTasks,
-  createTask as createTaskApi,
-  updateTask as updateTaskApi,
-  deleteTask as deleteTaskApi,
-  assignTask as assignTaskApi,
-} from "@/services/task.service";
-
-import type {
-  AssignTaskData,
-  CreateTaskData,
-  Task,
-  UpdateTaskData,
-} from "@/types/task";
+import {useCallback,useEffect,useState} from "react";
+import {getTasks,createTask as createTaskApi,updateTask as updateTaskApi,deleteTask as deleteTaskApi,assignTask as assignTaskApi,reorderTasks as reorderTasksApi,} from "@/services/task.service";
+import type {AssignTaskData,CreateTaskData,Task,UpdateTaskData} from "@/types/task";
 import type { PaginationMeta } from "@/types/pagination";
 
 interface UseTasksOptions {
@@ -44,9 +27,7 @@ export default function useTasks(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ----------------------------------------------
   // GET TASKS
-  // ----------------------------------------------
 
   const fetchTasks = useCallback(
     async () => {
@@ -81,9 +62,7 @@ export default function useTasks(
     [enabled, page, limit]
   );
 
-  // ----------------------------------------------
   // FETCH WHEN AUTH OR PARAMS ARE READY
-  // ----------------------------------------------
 
   useEffect(() => {
     if (!enabled) {
@@ -93,9 +72,7 @@ export default function useTasks(
     fetchTasks();
   }, [enabled, fetchTasks]);
 
-  // ----------------------------------------------
   // CREATE
-  // ----------------------------------------------
 
   const createTask = async (
     data: CreateTaskData
@@ -113,9 +90,7 @@ export default function useTasks(
     return newTask;
   };
 
-  // ----------------------------------------------
   // UPDATE
-  // ----------------------------------------------
 
   const updateTask = async (
     taskId: string,
@@ -144,7 +119,18 @@ export default function useTasks(
       setTasks((previous) =>
         previous.map((task) =>
           task._id === taskId
-            ? updatedTask
+            ? {
+                ...task,
+                ...updatedTask,
+                coverImageUrl:
+                  updatedTask.coverImageUrl !== undefined
+                    ? updatedTask.coverImageUrl
+                    : task.coverImageUrl,
+                attachmentCount:
+                  updatedTask.attachmentCount !== undefined
+                    ? updatedTask.attachmentCount
+                    : task.attachmentCount,
+              }
             : task
         )
       );
@@ -163,9 +149,7 @@ export default function useTasks(
     }
   };
 
-  // ----------------------------------------------
   // DELETE
-  // ----------------------------------------------
 
   const deleteTask = async (
     taskId: string
@@ -180,9 +164,7 @@ export default function useTasks(
     );
   };
 
-  // ----------------------------------------------
   // ASSIGN
-  // ----------------------------------------------
 
   const assignTask = async (
     taskId: string,
@@ -199,12 +181,39 @@ export default function useTasks(
     setTasks((previous) =>
       previous.map((task) =>
         task._id === taskId
-          ? assignedTask
+          ? {
+              ...task,
+              ...assignedTask,
+              coverImageUrl:
+                assignedTask.coverImageUrl !== undefined
+                  ? assignedTask.coverImageUrl
+                  : task.coverImageUrl,
+              attachmentCount:
+                assignedTask.attachmentCount !== undefined
+                  ? assignedTask.attachmentCount
+                  : task.attachmentCount,
+            }
           : task
       )
     );
 
     return assignedTask;
+  };
+
+  // REORDER
+
+  const reorderTasks = async (newTasks: Task[]) => {
+    setTasks(newTasks);
+
+    try {
+      const items = newTasks.map((t, index) => ({
+        taskId: t._id,
+        order: index,
+      }));
+      await reorderTasksApi(items);
+    } catch (err: any) {
+      console.warn("Failed to persist task order:", err);
+    }
   };
 
   const handleSetLimit = (newLimit: number) => {
@@ -223,6 +232,7 @@ export default function useTasks(
     setLimit: handleSetLimit,
     loading,
     error,
+    setError,
     clearError,
 
     fetchTasks,
@@ -230,5 +240,6 @@ export default function useTasks(
     updateTask,
     deleteTask,
     assignTask,
+    reorderTasks,
   };
 }
