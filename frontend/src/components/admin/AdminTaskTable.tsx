@@ -60,10 +60,7 @@ export default function AdminTaskTable({
 
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-            {pagination ? pagination.totalItems : tasks.length}{" "}
-            {(pagination ? pagination.totalItems : tasks.length) === 1
-              ? "task"
-              : "tasks"}
+            {displayedTasks.length} {displayedTasks.length === 1 ? "task" : "tasks"}
           </span>
 
           {showViewAllLink && (
@@ -133,9 +130,10 @@ export default function AdminTaskTable({
       </div>
 
       {/* Pagination Controls */}
-      {pagination && onPageChange && (
+      {pagination && onPageChange && displayedTasks.length > 0 && (
         <Pagination
           pagination={pagination}
+          itemCount={displayedTasks.length}
           onPageChange={onPageChange}
           onLimitChange={onLimitChange}
         />

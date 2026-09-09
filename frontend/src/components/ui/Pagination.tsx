@@ -6,6 +6,7 @@ import type { PaginationMeta } from "@/types/pagination";
 
 interface PaginationProps {
   pagination: PaginationMeta | null | undefined;
+  itemCount?: number;
   onPageChange: (page: number) => void;
   onLimitChange?: (limit: number) => void;
   className?: string;
@@ -14,30 +15,39 @@ interface PaginationProps {
 
 export default function Pagination({
   pagination,
+  itemCount,
   onPageChange,
   onLimitChange,
   className = "",
   showPageSizeSelector = true,
 }: PaginationProps) {
-  if (!pagination || pagination.totalPages <= 1) {
-    if (!pagination || pagination.totalItems === 0) return null;
-    // If only 1 page, we can still show the item count summary
-    return (
-      <div className={`flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-white text-xs text-gray-500 font-medium ${className}`}>
-        <span>
-          Showing <span className="font-bold text-gray-800">1</span> to{" "}
-          <span className="font-bold text-gray-800">{pagination.totalItems}</span> of{" "}
-          <span className="font-bold text-gray-800">{pagination.totalItems}</span> results
-        </span>
-      </div>
-    );
+  // If no pagination, or 0 items in pagination, or 0 items currently displayed, don't show pagination summary
+  if (!pagination || pagination.totalItems === 0 || itemCount === 0) {
+    return null;
   }
 
   const { page, limit, totalItems, totalPages, hasNextPage, hasPreviousPage } =
     pagination;
 
+  // Actual count of items on the current page
+  const currentCount = itemCount !== undefined ? itemCount : Math.min(limit, totalItems);
+
+  if (totalPages <= 1) {
+    return (
+      <div
+        className={`flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-white text-xs text-gray-500 font-medium ${className}`}
+      >
+        <span>
+          Showing <span className="font-bold text-gray-800">1</span> to{" "}
+          <span className="font-bold text-gray-800">{currentCount}</span> of{" "}
+          <span className="font-bold text-gray-800">{totalItems}</span> results
+        </span>
+      </div>
+    );
+  }
+
   const startItem = Math.min((page - 1) * limit + 1, totalItems);
-  const endItem = Math.min(page * limit, totalItems);
+  const endItem = Math.min(startItem + currentCount - 1, totalItems);
 
   // Generate page numbers with smart ellipsis window
   const getPageNumbers = () => {

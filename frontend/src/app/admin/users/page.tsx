@@ -86,6 +86,22 @@ export default function AdminUsersPage() {
     });
   }, [users, searchQuery, roleFilter]);
 
+  const isFiltered = searchQuery.trim() !== "" || roleFilter !== "ALL";
+
+  const effectivePagination = useMemo(() => {
+    if (isFiltered) {
+      return {
+        page: 1,
+        limit,
+        totalItems: filteredUsers.length,
+        totalPages: Math.ceil(filteredUsers.length / limit) || 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+    }
+    return pagination;
+  }, [isFiltered, filteredUsers.length, limit, pagination]);
+
   if (
     authLoading ||
     !user ||
@@ -190,7 +206,7 @@ export default function AdminUsersPage() {
         <UserTable
           users={filteredUsers}
           tasks={tasks}
-          pagination={pagination}
+          pagination={effectivePagination}
           onPageChange={setPage}
           onLimitChange={setLimit}
           title="Registered Accounts"

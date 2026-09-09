@@ -60,10 +60,8 @@ export default function UserTable({
 
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-            {pagination ? pagination.totalItems : users.length}{" "}
-            {(pagination ? pagination.totalItems : users.length) === 1
-              ? "user"
-              : "users"}
+            {displayedUsers.length}{" "}
+            {displayedUsers.length === 1 ? "user" : "users"}
           </span>
 
           {showViewAllLink && (
@@ -128,9 +126,10 @@ export default function UserTable({
       </div>
 
       {/* Pagination Controls */}
-      {pagination && onPageChange && (
+      {pagination && onPageChange && displayedUsers.length > 0 && (
         <Pagination
           pagination={pagination}
+          itemCount={displayedUsers.length}
           onPageChange={onPageChange}
           onLimitChange={onLimitChange}
         />

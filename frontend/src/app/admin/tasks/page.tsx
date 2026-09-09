@@ -108,6 +108,25 @@ export default function AdminTasksPage() {
     });
   }, [tasks, searchQuery, statusFilter, assigneeFilter]);
 
+  const isFiltered =
+    searchQuery.trim() !== "" ||
+    statusFilter !== "ALL" ||
+    assigneeFilter !== "ALL";
+
+  const effectivePagination = useMemo(() => {
+    if (isFiltered) {
+      return {
+        page: 1,
+        limit,
+        totalItems: filteredTasks.length,
+        totalPages: Math.ceil(filteredTasks.length / limit) || 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+    }
+    return pagination;
+  }, [isFiltered, filteredTasks.length, limit, pagination]);
+
   if (
     authLoading ||
     !user ||
@@ -201,7 +220,7 @@ export default function AdminTasksPage() {
         <AdminTaskTable
           tasks={filteredTasks}
           users={users}
-          pagination={pagination}
+          pagination={effectivePagination}
           onPageChange={setPage}
           onLimitChange={setLimit}
           onReassignTask={handleReassignTask}
