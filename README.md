@@ -912,8 +912,8 @@ The backend Express API is hosted on **Microsoft Azure** (Azure App Service or A
 3. Deploy the application.
 
 ### Production Deployment URLs
-- **Frontend Live Application**: `<FRONTEND_DEPLOYMENT_URL>`
-- **Backend API Base (Azure)**: `https://<YOUR_AZURE_BACKEND_APP>.azurewebsites.net/api`
+- **Frontend Live Application**: [https://task-management-system-green-nine.vercel.app](https://task-management-system-green-nine.vercel.app)
+- **Backend API Base (Azure)**: [https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/api](https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/api)
 
 ---
 
@@ -1043,5 +1043,5 @@ The following features are not currently implemented and are identified as poten
 - **Developer**: Dulanga Bandara
 - **GitHub**: [dulanga1000](https://github.com/dulanga1000)
 - **Repository**: [https://github.com/dulanga1000/task-management-system](https://github.com/dulanga1000/task-management-system)
-- **Frontend Live Application**: `https://task-management-system-green-nine.vercel.app`
-- **Backend API Base (Microsoft Azure)**: `https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/`
+- **Frontend Live Application**: [https://task-management-system-green-nine.vercel.app](https://task-management-system-green-nine.vercel.app)
+- **Backend API Base (Microsoft Azure)**: [https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/api](https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/api)
