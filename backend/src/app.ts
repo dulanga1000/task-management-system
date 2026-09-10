@@ -12,6 +12,11 @@ import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
+// TRUST PROXY
+// Required for Azure App Service, Vercel, and reverse proxies
+// so express-rate-limit identifies distinct client IPs instead of the proxy IP
+app.set("trust proxy", 1);
+
 // SECURITY
 
 app.use(helmet());

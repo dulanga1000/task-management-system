@@ -4,20 +4,22 @@ import { env } from "../config/env.js";
 
 // COOKIE OPTIONS
 
-export const getRefreshCookieOptions = () => ({
-  httpOnly: true,
+export const getRefreshCookieOptions = () => {
+  const isProduction =
+    env.nodeEnv === "production" || process.env.NODE_ENV === "production";
 
-  secure:
-    env.nodeEnv === "production",
+  return {
+    httpOnly: true,
 
-  sameSite:
-    (env.nodeEnv === "production" ? "none" : "lax") as "none" | "lax",
+    secure: isProduction,
 
-  maxAge:
-    7 * 24 * 60 * 60 * 1000,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
 
-  path: "/api/auth",
-});
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+
+    path: "/",
+  };
+};
 
 // REGISTER
 
