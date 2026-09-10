@@ -25,6 +25,7 @@ export interface ActivityDetails {
   newValue?: string;
   fileName?: string;
   assignedToName?: string;
+  assignedToUserId?: string;
   comment?: string;
 }
 

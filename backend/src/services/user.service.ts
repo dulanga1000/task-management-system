@@ -1,6 +1,7 @@
 import User, { type IUser } from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import Task from "../models/Task.js";
+import Activity from "../models/Activity.js";
 import { USER_ROLES } from "../constants/roles.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
@@ -125,6 +126,8 @@ export const updateUser = async (
     user.email = data.email.toLowerCase();
   }
 
+  const oldFullName = `${user.firstName} ${user.lastName}`.trim();
+
   if (data.firstName !== undefined) {
     user.firstName = data.firstName;
   }
@@ -134,6 +137,21 @@ export const updateUser = async (
   }
 
   await user.save();
+
+  const newFullName = `${user.firstName} ${user.lastName}`.trim();
+  if (oldFullName && newFullName && oldFullName !== newFullName) {
+    await Activity.updateMany(
+      {
+        $or: [
+          { "details.assignedToUserId": user._id },
+          { "details.assignedToName": oldFullName },
+        ],
+      } as any,
+      {
+        $set: { "details.assignedToName": newFullName },
+      }
+    ).catch((err) => console.warn("Failed to sync activity assignedToName:", err));
+  }
 
   const updated = await User.findById(userId).select("-password").lean();
   return populateProfilePictureUrl(updated);
@@ -230,6 +248,8 @@ export const updateProfile = async (
     user.email = data.email.toLowerCase();
   }
 
+  const oldFullName = `${user.firstName} ${user.lastName}`.trim();
+
   if (data.firstName !== undefined) {
     user.firstName = data.firstName;
   }
@@ -239,6 +259,21 @@ export const updateProfile = async (
   }
 
   await user.save();
+
+  const newFullName = `${user.firstName} ${user.lastName}`.trim();
+  if (oldFullName && newFullName && oldFullName !== newFullName) {
+    await Activity.updateMany(
+      {
+        $or: [
+          { "details.assignedToUserId": user._id },
+          { "details.assignedToName": oldFullName },
+        ],
+      } as any,
+      {
+        $set: { "details.assignedToName": newFullName },
+      }
+    ).catch((err) => console.warn("Failed to sync activity assignedToName:", err));
+  }
 
   const updated = await User.findById(userId).select("-password").lean();
   return populateProfilePictureUrl(updated);

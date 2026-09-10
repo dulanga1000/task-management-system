@@ -984,8 +984,8 @@ For testing and evaluation, sample credentials for both system roles are provide
 To seed the initial administrator account in your environment:
 1. Configure the desired admin credentials in `backend/.env`:
    ```bash
-   ADMIN_FIRST_NAME=Dulanga
-   ADMIN_LAST_NAME=Bandara
+   ADMIN_FIRST_NAME=Admin
+   ADMIN_LAST_NAME=User
    ADMIN_USERNAME=admin
    ADMIN_EMAIL=admin@example.com
    ADMIN_PASSWORD=Admin@12345
@@ -1044,4 +1044,4 @@ The following features are not currently implemented and are identified as poten
 - **GitHub**: [dulanga1000](https://github.com/dulanga1000)
 - **Repository**: [https://github.com/dulanga1000/task-management-system](https://github.com/dulanga1000/task-management-system)
 - **Frontend Live Application**: `https://task-management-system-green-nine.vercel.app`
-- **Backend API Base (Microsoft Azure)**: `https://<YOUR_AZURE_BACKEND_APP>.azurewebsites.net/api`
+- **Backend API Base (Microsoft Azure)**: `https://taskflow-task-dxhrfzgbapaxgecm.southeastasia-01.azurewebsites.net/`

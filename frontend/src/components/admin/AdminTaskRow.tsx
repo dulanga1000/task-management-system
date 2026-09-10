@@ -47,6 +47,10 @@ export default function AdminTaskRow({
     }
   };
 
+  const cleanDescription = task.description
+    ? task.description.replace(/<[^>]*>?/gm, "").trim()
+    : "";
+
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50/70 last:border-0">
       {/* Title & Description */}
@@ -55,9 +59,9 @@ export default function AdminTaskRow({
           <p className="font-semibold text-gray-900 line-clamp-1">
             {task.title}
           </p>
-          {task.description && (
+          {cleanDescription && (
             <p className="mt-0.5 text-xs text-gray-400 line-clamp-1 font-normal">
-              {task.description}
+              {cleanDescription}
             </p>
           )}
         </div>

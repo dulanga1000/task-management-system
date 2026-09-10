@@ -56,6 +56,7 @@ export const createTask = async (
       : "User";
     await logActivity(task._id.toString(), creatorId, "TASK_ASSIGNED", {
       assignedToName: assigneeDisplayName,
+      assignedToUserId: assignedUser?._id.toString(),
     });
   }
 
@@ -342,6 +343,7 @@ export const assignTask = async (
 
     await logActivity(task._id.toString(), userId, "TASK_ASSIGNED", {
       assignedToName: assigneeDisplayName,
+      assignedToUserId: assignedUser._id.toString(),
     });
 
     return getTaskById(task._id.toString());
@@ -375,6 +377,7 @@ export const assignTask = async (
 
   await logActivity(task._id.toString(), userId, "TASK_ASSIGNED", {
     assignedToName: assigneeDisplayName,
+    assignedToUserId: assignedUser._id.toString(),
   });
 
   return getTaskById(task._id.toString());

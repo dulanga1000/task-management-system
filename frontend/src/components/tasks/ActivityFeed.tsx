@@ -315,14 +315,23 @@ export default function ActivityFeed({ taskId, refreshTrigger = 0 }: ActivityFee
                             from this card
                           </span>
                         )}
-                        {act.type === "TASK_ASSIGNED" && (
-                          <span>
-                            assigned this task to{" "}
-                            <strong className="font-semibold text-gray-900">
-                              {act.details?.assignedToName || "a team member"}
-                            </strong>
-                          </span>
-                        )}
+                        {act.type === "TASK_ASSIGNED" && (() => {
+                          let assigneeName = act.details?.assignedToName || "a team member";
+                          if (
+                            assigneeName === "Dulanga Bandara" &&
+                            (userName === "MMDN Bandara" || act.user?.username === "dulanga1000")
+                          ) {
+                            assigneeName = userName;
+                          }
+                          return (
+                            <span>
+                              assigned this task to{" "}
+                              <strong className="font-semibold text-gray-900">
+                                {assigneeName}
+                              </strong>
+                            </span>
+                          );
+                        })()}
                         {(act.type === "DETAILS_UPDATED" ||
                           act.type === "TITLE_UPDATED" ||
                           act.type === "DESCRIPTION_UPDATED") && (
