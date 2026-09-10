@@ -80,10 +80,15 @@ Here are key previews of the TaskFlow platform interface:
 
 ![Admin User Management](./screenshots/admin-users.png)
 
-### 5. Authentication & Landing Page
-> Clean, responsive landing page and secure authentication interface.
+### 5. Landing Page
+> Clean, responsive landing page`.
 
 ![Landing Page](./screenshots/landing-page.png)
+
+### 6. Authentication Page
+> Secure authentication interface.
+
+![Landing Page](./screenshots/login.png)
 
 ---
 
@@ -96,7 +101,9 @@ Here are key previews of the TaskFlow platform interface:
 - [x] Refresh-token rotation with family IDs and concurrency grace window handling
 - [x] Token reuse detection that invalidates compromised token families
 - [x] In-memory access token storage to prevent persistent browser storage theft
-- [x] Secure `HttpOnly`, `SameSite=Lax` cookie configuration for refresh tokens
+- [x] Secure `HttpOnly`, `SameSite=None; Secure` (production) / `SameSite=Lax` (development) cookie configuration with path `/`
+- [x] Next.js reverse proxy rewrites (`/api/:path*`) eliminating third-party cookie restrictions across hosted domains
+- [x] Express reverse proxy trust (`trust proxy: 1`) ensuring per-client rate limiting behind Azure load balancers
 - [x] Role-Based Access Control (`USER` and `ADMIN` roles)
 - [x] Synchronized cross-tab session termination via `BroadcastChannel`
 - [x] Configurable client-side idle inactivity timeout with countdown warning modal
@@ -419,7 +426,12 @@ TaskFlow implements security best practices to protect user data, prevent sessio
 
 ### Dual-Token Lifecycle
 - **Access Token**: Short-lived JWT (15 minutes default) containing `userId` and `role`. Kept strictly **in-memory** in the frontend client (`api.ts` module scope) to eliminate exposure to token theft via persistent browser storage (`localStorage` / `sessionStorage`).
-- **Refresh Token**: Long-lived JWT (7 days default) stored inside an `HttpOnly`, `SameSite=Lax` cookie bound to path `/api/auth`. JavaScript running in the browser cannot read or manipulate this cookie.
+- **Refresh Token**: Long-lived JWT (7 days default) stored inside an `HttpOnly`, `SameSite=None; Secure` (in production) or `SameSite=Lax` (in development) cookie bound to path `/`. JavaScript running in the browser cannot read or manipulate this cookie.
+
+### Reverse Proxy Architecture & Third-Party Cookie Mitigation
+To eliminate modern browser cross-site cookie restrictions (such as Apple Safari ITP, Google Chrome third-party cookie phase-out, and Brave Shields) when frontend and backend are hosted on separate domains (e.g., Vercel + Microsoft Azure):
+- **Next.js Proxy Rewrites (`next.config.ts`)**: The frontend maps `/api/:path*` directly to `${BACKEND_URL}/api/:path*` on the server edge. The browser communicates strictly with the same-origin (`/api`), allowing the refresh cookie to be processed as a first-party credential.
+- **Express Trust Proxy (`app.set("trust proxy", 1)`)**: Instructs Express to trust reverse proxy headers (`X-Forwarded-For`) supplied by Azure App Service and Vercel. This ensures each client IP is resolved individually rather than sharing a single gateway IP.
 
 ### Atomic Refresh-Token Rotation & Grace Window
 1. On each call to `POST /api/auth/refresh`, the server verifies the signature and validates the token hash stored in MongoDB.
@@ -433,8 +445,8 @@ TaskFlow implements security best practices to protect user data, prevent sessio
 - When a user changes their password via `PATCH /api/users/me/password`, all existing refresh tokens for that user are immediately deleted from MongoDB, invalidating all other active browser sessions.
 
 ### Rate Limiting & Security Headers
-- **`authRateLimiter`**: Restricts `POST /api/auth/login` and `POST /api/auth/register` to 10 requests per 15 minutes per IP address.
-- **`refreshRateLimiter`**: Restricts `POST /api/auth/refresh` to 60 requests per 15 minutes per IP address.
+- **`authRateLimiter`**: Restricts `POST /api/auth/login` and `POST /api/auth/register` to 10 requests per 15 minutes per client IP address.
+- **`refreshRateLimiter`**: Restricts `POST /api/auth/refresh` to 60 requests per 15 minutes per client IP address.
 - **Helmet**: Injects security headers including `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and strict referrer policies.
 
 ---
@@ -810,8 +822,9 @@ cp frontend/.env.example frontend/.env
 
 | Variable | Description | Example / Default |
 |:---|:---|:---|
-| `NEXT_PUBLIC_API_URL` | Base URL of the backend Express API | `http://localhost:5000/api` |
+| `NEXT_PUBLIC_API_URL` | Client-side API route prefix (Relative path for Next.js proxy) | `/api` |
 | `NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES` | Inactivity minutes before session logout | `30` |
+| `BACKEND_URL` | Server-side destination URL for Next.js proxy rewrites | `http://localhost:5000` (Local) / `https://your-backend.azurewebsites.net` (Prod) |
 
 ---
 
@@ -936,9 +949,10 @@ The backend Express API is hosted on **Microsoft Azure** (Azure App Service or A
 ### Frontend Deployment (Vercel)
 1. Import the `frontend` folder into **Vercel**.
 2. Configure environment variables in the Vercel dashboard:
-   - `NEXT_PUBLIC_API_URL`: `https://<YOUR_AZURE_BACKEND_APP>.azurewebsites.net/api`
+   - `NEXT_PUBLIC_API_URL`: `/api`
    - `NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES`: `30`
-3. Deploy the application.
+   - `BACKEND_URL`: `https://<YOUR_AZURE_BACKEND_APP>.azurewebsites.net`
+3. Deploy the application. Next.js server-side rewrites will automatically proxy `/api/*` calls directly to your Azure backend.
 
 ### Production Deployment URLs
 - **Frontend Live Application**: [https://task-management-system-green-nine.vercel.app](https://task-management-system-green-nine.vercel.app)
@@ -946,11 +960,23 @@ The backend Express API is hosted on **Microsoft Azure** (Azure App Service or A
 
 ---
 
-## CORS Configuration
+## CORS & Reverse Proxy Configuration
 
-TaskFlow strictly regulates cross-origin communication:
+TaskFlow supports two complementary communication architectures:
 
 ```text
+1. First-Party Proxy Mode (Recommended via Next.js Rewrites):
+Browser Client (https://your-frontend.vercel.app)
+    │
+    │  Same-Origin Request (/api/auth/login)
+    ▼
+Vercel Edge Proxy (next.config.ts rewrites)
+    │
+    │  Server-to-Server HTTPS Proxy (credentials forwarded)
+    ▼
+Azure Backend API (https://your-backend.azurewebsites.net/api)
+
+2. Direct Cross-Origin Mode:
 Frontend Client (http://localhost:3000)
     │
     │  CORS Request (credentials: true)
@@ -959,8 +985,9 @@ Backend API (http://localhost:5000)
     Origin check against: env.clientUrl (CLIENT_URL)
 ```
 
-- When deploying to production, `CLIENT_URL` on the backend must match the exact origin of the frontend application (e.g., `https://your-taskflow.vercel.app`).
-- The frontend `NEXT_PUBLIC_API_URL` must point to the backend domain (e.g., `https://api.your-taskflow.com/api`).
+- **Production (Proxy Mode)**: Setting `NEXT_PUBLIC_API_URL=/api` and `BACKEND_URL` on Vercel routes all client calls through Next.js proxy rewrites, guaranteeing first-party cookie handling across modern browsers (avoiding third-party cookie blocks).
+- **Backend Origin Verification**: `CLIENT_URL` on Azure must match the frontend origin (`https://your-taskflow.vercel.app`) to ensure CORS safety for any direct requests.
+- **Trust Proxy**: With `app.set("trust proxy", 1)`, Express inspects the `X-Forwarded-For` header from Azure and Vercel load balancers to correctly apply rate limits per real client IP.
 
 ---
 
