@@ -16,9 +16,13 @@ const app = express();
 
 app.use(helmet());
 
+const allowedOrigins = env.clientUrl.includes(",")
+  ? env.clientUrl.split(",").map((url) => url.trim())
+  : env.clientUrl;
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: allowedOrigins,
     credentials: true,
   })
 );

@@ -1043,5 +1043,5 @@ The following features are not currently implemented and are identified as poten
 - **Developer**: Dulanga Bandara
 - **GitHub**: [dulanga1000](https://github.com/dulanga1000)
 - **Repository**: [https://github.com/dulanga1000/task-management-system](https://github.com/dulanga1000/task-management-system)
-- **Frontend Live Application**: `<FRONTEND_DEPLOYMENT_URL>`
+- **Frontend Live Application**: `https://task-management-system-green-nine.vercel.app`
 - **Backend API Base (Microsoft Azure)**: `https://<YOUR_AZURE_BACKEND_APP>.azurewebsites.net/api`

@@ -11,7 +11,7 @@ export const getRefreshCookieOptions = () => ({
     env.nodeEnv === "production",
 
   sameSite:
-    "lax" as const,
+    (env.nodeEnv === "production" ? "none" : "lax") as "none" | "lax",
 
   maxAge:
     7 * 24 * 60 * 60 * 1000,
