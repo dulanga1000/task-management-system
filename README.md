@@ -144,22 +144,22 @@ TaskFlow follows an agile Kanban lifecycle with three standardized stages:
 ```mermaid
 flowchart LR
     subgraph Creation["1. Task Inception"]
-        Create[Create Task] --> CheckAssign{Assigned?}
-        CheckAssign -->|Unassigned| OpenPool[Open Task Pool]
-        CheckAssign -->|Assigned| AssignedState[Assigned Member]
+        Create["Create Task"] --> CheckAssign{"Assigned?"}
+        CheckAssign -->|Unassigned| OpenPool["Open Task Pool"]
+        CheckAssign -->|Assigned| AssignedState["Assigned Member"]
     end
 
     subgraph Stages["2. Kanban Workflow Stages"]
-        OpenPool --> TODO[TODO<br/>Pending Work]
+        OpenPool --> TODO["TODO: Pending Work"]
         AssignedState --> TODO
-        TODO <-->|Drag & Drop / Modal| DOING[DOING<br/>In Progress]
-        DOING <-->|Drag & Drop / Modal| DONE[DONE<br/>Completed]
+        TODO <-->|Drag and Drop| DOING["DOING: In Progress"]
+        DOING <-->|Drag and Drop| DONE["DONE: Completed"]
     end
 
     subgraph Assignment["3. Assignment Rules"]
-        TODO -.->|USER: Claim eligible task| AssignedSelf[Self-Assigned]
-        TODO -.->|ADMIN: Assign to anyone| GlobalAssign[Admin Assignment]
-        DOING -.->|ADMIN: Reassign / Unassign| Reassign[Reassigned Task]
+        TODO -.->|USER: Claim eligible task| AssignedSelf["Self-Assigned"]
+        TODO -.->|ADMIN: Assign to anyone| GlobalAssign["Admin Assignment"]
+        DOING -.->|ADMIN: Reassign / Unassign| Reassign["Reassigned Task"]
     end
 ```
 
@@ -205,25 +205,25 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Client["Frontend Client (Next.js 16 + React 19)"]
-        UI[Pages & Components]
-        AuthCtx[AuthContext & useIdleLogout]
-        AxiosClient[Axios Instance<br/>(In-Memory Access Token)]
-        BC[BroadcastChannel<br/>Cross-Tab Sync]
+        UI["Pages & Components"]
+        AuthCtx["AuthContext & useIdleLogout"]
+        AxiosClient["Axios Instance (In-Memory Access Token)"]
+        BC["BroadcastChannel (Cross-Tab Sync)"]
         UI --> AuthCtx
         AuthCtx --> AxiosClient
         AuthCtx <--> BC
     end
 
     subgraph API["Backend API (Express 5 + Node.js)"]
-        Router[Express Routers]
-        Security[Helmet + CORS + Rate Limiters]
-        AuthMW[Auth Middleware (JWT Verify)]
-        RoleMW[Role Middleware (RBAC Guard)]
-        ValMW[Zod Validation Middleware]
-        UploadMW[Multer + Magic Bytes Validator]
-        Controllers[Controllers]
-        Services[Service Layer]
-        ErrMW[Centralized Error Middleware]
+        Router["Express Routers"]
+        Security["Helmet + CORS + Rate Limiters"]
+        AuthMW["Auth Middleware (JWT Verify)"]
+        RoleMW["Role Middleware (RBAC Guard)"]
+        ValMW["Zod Validation Middleware"]
+        UploadMW["Multer + Magic Bytes Validator"]
+        Controllers["Controllers"]
+        Services["Service Layer"]
+        ErrMW["Centralized Error Middleware"]
 
         Router --> Security --> ValMW --> AuthMW --> RoleMW --> UploadMW --> Controllers
         Controllers --> Services
@@ -232,8 +232,8 @@ flowchart TB
     end
 
     subgraph Storage["Data & Storage Providers"]
-        Mongo[(MongoDB Database<br/>Mongoose Models)]
-        S3[(Supabase Storage / S3<br/>Encrypted Bucket)]
+        Mongo[("MongoDB Database (Mongoose Models)")]
+        S3[("Supabase Storage (S3 Bucket)")]
         Services --> Mongo
         Services --> S3
     end
@@ -967,28 +967,6 @@ The backend implements safe, server-side pagination for user listings and task q
 
 ---
 
-## Testing
-
-Automated tests are not currently included.
-
-Quality verification is performed via TypeScript compilation (`npm run build` in both frontend and backend) and manual end-to-end testing across authentication flows, board drag-and-drop operations, RBAC permissions, and file uploads.
-
----
-
-## Screenshots
-- **Landing Page**: Modern hero section, capability cards, and platform highlights.
-
-![alt text](image.png)
-- **Kanban Board**: Interactive columns (`TODO`, `DOING`, `DONE`) with priority tags and avatars.
-![alt text](image-1.png)
-- **Task Detail Modal**: Rich description editor, checklist items, dates, and attachment previews.
-![alt text](image-2.png)
-- **Admin Dashboard**: Aggregated metric widgets, paginated user management, and reassignment views.
-![alt text](image-3.png)
-- **Profile Settings**: Profile information management, secure password change, and avatar uploads.
-![alt text](image-4.png)
----
-
 ## Demo Credentials
 
 For testing and evaluation, sample credentials for both system roles are provided below:
@@ -1006,11 +984,11 @@ For testing and evaluation, sample credentials for both system roles are provide
 To seed the initial administrator account in your environment:
 1. Configure the desired admin credentials in `backend/.env`:
    ```bash
-   ADMIN_FIRST_NAME=Admin
-   ADMIN_LAST_NAME=User
+   ADMIN_FIRST_NAME=Dulanga
+   ADMIN_LAST_NAME=Bandara
    ADMIN_USERNAME=admin
-   ADMIN_EMAIL=admin@taskflow.local
-   ADMIN_PASSWORD=AdminPassword123!
+   ADMIN_EMAIL=admin@example.com
+   ADMIN_PASSWORD=Admin@12345
    ```
 2. Run the seeding utility:
    ```bash
@@ -1057,12 +1035,6 @@ The following features are not currently implemented and are identified as poten
    ```
 4. Commit your changes with clear, descriptive messages.
 5. Push to your branch and open a Pull Request.
-
----
-
-## License
-
-License information has not yet been added.
 
 ---
 
