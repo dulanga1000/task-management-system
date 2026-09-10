@@ -23,26 +23,26 @@ export default function Navbar() {
 
         {/* Navigation */}
         <div className="hidden items-center gap-1 md:flex">
-          <a
-            href="#features"
+          <Link
+            href="/#features"
             className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/70 hover:text-slate-900"
           >
             Features
-          </a>
+          </Link>
 
-          <a
-            href="#how-it-works"
+          <Link
+            href="/#how-it-works"
             className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/70 hover:text-slate-900"
           >
             How it works
-          </a>
+          </Link>
 
-          <a
-            href="#faq"
+          <Link
+            href="/#faq"
             className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/70 hover:text-slate-900"
           >
             FAQ
-          </a>
+          </Link>
         </div>
 
         {/* Actions */}

@@ -33,6 +33,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} antialiased`}
+      data-scroll-behavior="smooth"
     >
       <head>
         <link rel="icon" href="/logo.png" type="image/png" sizes="any" />

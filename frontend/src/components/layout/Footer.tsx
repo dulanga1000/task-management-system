@@ -31,28 +31,28 @@ export default function Footer() {
             </h4>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <a
+                <Link
                   href="/#features"
                   className="transition-colors hover:text-white"
                 >
                   Features
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/#how-it-works"
                   className="transition-colors hover:text-white"
                 >
                   How it works
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/#faq"
                   className="transition-colors hover:text-white"
                 >
                   FAQ
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
