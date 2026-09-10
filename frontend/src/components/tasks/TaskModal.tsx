@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Clock, Tag, Calendar, CheckSquare, UserCheck, Check, X } from "lucide-react";
-import type {CreateTaskData,Task,TaskStatus,UpdateTaskData,TaskLabel,TaskChecklistItem} from "@/types/task";
+import type { CreateTaskData, Task, TaskStatus, UpdateTaskData, TaskLabel, TaskChecklistItem } from "@/types/task";
 import type { User } from "@/types/user";
 import useAuth from "@/hooks/useAuth";
 import { AttachmentSection } from "./AttachmentSection";
@@ -297,11 +297,10 @@ export default function TaskModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/50 p-2 sm:p-4 backdrop-blur-sm">
       <div
-        className={`w-full overflow-hidden rounded-2xl bg-white shadow-2xl transition-all ${
-          isEditing
+        className={`w-full overflow-hidden rounded-2xl bg-white shadow-2xl transition-all ${isEditing
             ? "max-w-5xl max-h-[92vh] flex flex-col"
             : "max-w-lg max-h-[90vh] overflow-y-auto"
-        }`}
+          }`}
       >
         {/* Modal Top Nav Bar */}
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gray-50/50">
@@ -318,17 +317,16 @@ export default function TaskModal({
                       setActivityRefreshKey((k) => k + 1);
                     }
                   }}
-                  className={`h-8 rounded-md px-3 text-xs font-semibold cursor-pointer border outline-none transition-colors ${
-                    status === "DONE"
+                  className={`h-8 rounded-md px-3 text-xs font-semibold cursor-pointer border outline-none transition-colors ${status === "DONE"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                       : status === "DOING"
-                      ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
-                  }`}
+                        ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                        : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                    }`}
                 >
-                  <option value="TODO">To Do ▾</option>
-                  <option value="DOING">In Progress ▾</option>
-                  <option value="DONE">Done ▾</option>
+                  <option value="TODO">To Do</option>
+                  <option value="DOING">In Progress</option>
+                  <option value="DONE">Done</option>
                 </select>
               </div>
             ) : (
@@ -731,8 +729,8 @@ export default function TaskModal({
                             {u.id === effectiveUserId
                               ? " (You)"
                               : u.role === "ADMIN"
-                              ? " (Admin)"
-                              : ""}
+                                ? " (Admin)"
+                                : ""}
                           </option>
                         ))}
                       </select>
@@ -828,7 +826,7 @@ export default function TaskModal({
                       <span className="font-semibold text-gray-700">
                         {task.creator
                           ? `${task.creator.firstName || ""} ${task.creator.lastName || ""}`.trim() ||
-                            `@${task.creator.username}`
+                          `@${task.creator.username}`
                           : "Former Member"}
                       </span>
                     </p>
