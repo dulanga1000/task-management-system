@@ -10,6 +10,7 @@ import type { PaginationParams, PaginationMeta } from "../types/pagination.js";
 import type { UpdateUserInput, UpdateProfileInput, ChangePasswordInput } from "../validations/user.validation.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { uploadToStorage, deleteFromStorage, generateProfilePictureKey, getPresignedFileUrl } from "../utils/storage.js";
+import { env } from "../config/env.js";
 
 export interface GetUsersResult {
   users: Omit<IUser, "password">[];
@@ -23,13 +24,16 @@ export const populateProfilePictureUrl = async (userDoc: any) => {
 
   if (user.profilePicture?.storageKey) {
     try {
-      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      const url = await getPresignedFileUrl(
+        user.profilePicture.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
       user.profilePicture = {
         ...user.profilePicture,
         url,
       };
-    } catch (err) {
-      console.error("Failed to generate presigned URL for user profile picture:", err);
+    } catch {
+      console.warn("Failed to generate signed URL for user profile picture");
     }
   } else {
     user.profilePicture = null;
@@ -359,8 +363,8 @@ export const uploadUserProfilePicture = async (
     // Compensating rollback: delete uploaded object from storage
     try {
       await deleteFromStorage(storageKey);
-    } catch (cleanupError) {
-      console.error("Rollback cleanup error:", cleanupError);
+    } catch {
+      console.warn("Rollback cleanup note on profile picture update");
     }
     throw dbError;
   }
@@ -369,8 +373,8 @@ export const uploadUserProfilePicture = async (
   if (oldStorageKey) {
     try {
       await deleteFromStorage(oldStorageKey);
-    } catch (cleanupError) {
-      console.warn("Failed to delete old profile picture from storage:", cleanupError);
+    } catch {
+      console.warn("Note: Old profile picture cleanup deferred");
     }
   }
 

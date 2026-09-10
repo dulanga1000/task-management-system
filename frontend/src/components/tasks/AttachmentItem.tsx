@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Attachment } from "@/types/attachment";
+import { getTaskAttachmentSignedUrl } from "@/services/attachment.service";
 import { FileText, Download, Trash2, ExternalLink, Eye } from "lucide-react";
 
 interface AttachmentItemProps {
@@ -18,6 +19,29 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
   onPreviewImage,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState<string | undefined>(attachment.url);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
+
+  useEffect(() => {
+    setCurrentUrl(attachment.url);
+    setHasRefreshed(false);
+  }, [attachment.url]);
+
+  const handleImageError = async () => {
+    if (hasRefreshed || !attachment.task || !attachment._id) return;
+    setHasRefreshed(true);
+    try {
+      const freshUrl = await getTaskAttachmentSignedUrl(
+        attachment.task,
+        attachment._id
+      );
+      if (freshUrl) {
+        setCurrentUrl(freshUrl);
+      }
+    } catch {
+      // safe fallback
+    }
+  };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -61,14 +85,15 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
       <div className="group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden shadow-xs hover:shadow-md transition-all">
         {/* Image Thumbnail Container */}
         <div
-          onClick={() => onPreviewImage?.(attachment)}
+          onClick={() => onPreviewImage?.({ ...attachment, url: currentUrl })}
           className="relative h-28 w-full bg-gray-100 overflow-hidden cursor-pointer flex items-center justify-center"
         >
-          {attachment.url ? (
+          {currentUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={attachment.url}
+              src={currentUrl}
               alt={attachment.originalName}
+              onError={handleImageError}
               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
@@ -80,9 +105,9 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             <span className="p-1.5 rounded-lg bg-white/90 text-gray-800 shadow-sm hover:bg-white transition-colors">
               <Eye className="w-4 h-4" />
             </span>
-            {attachment.url && (
+            {currentUrl && (
               <a
-                href={attachment.url}
+                href={currentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -162,9 +187,9 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        {attachment.url && (
+        {currentUrl && (
           <a
-            href={attachment.url}
+            href={currentUrl}
             target="_blank"
             rel="noopener noreferrer"
             download={attachment.originalName}

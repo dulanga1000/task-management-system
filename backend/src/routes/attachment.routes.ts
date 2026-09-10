@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload, getByTask, remove } from "../controllers/attachment.controller.js";
+import { upload, getByTask, remove, getAttachmentUrl } from "../controllers/attachment.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { uploadAttachmentFile } from "../middleware/upload.middleware.js";
 
@@ -13,6 +13,9 @@ router.post("/", uploadAttachmentFile, upload);
 
 // Get all attachments for a task
 router.get("/", getByTask);
+
+// Get fresh signed URL for a single attachment
+router.get("/:attachmentId/url", getAttachmentUrl);
 
 // Delete an attachment from a task
 router.delete("/:attachmentId", remove);

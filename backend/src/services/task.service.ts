@@ -2,6 +2,7 @@ import Task from "../models/Task.js";
 import User from "../models/User.js";
 import Attachment from "../models/Attachment.js";
 import { getPresignedFileUrl } from "../utils/storage.js";
+import { env } from "../config/env.js";
 import { USER_ROLES, type UserRole } from "../constants/roles.js";
 import type { CreateTaskInput, UpdateTaskInput, AssignTaskInput } from "../validations/task.validation.js";
 import { AppError } from "../utils/app-error.js";
@@ -72,7 +73,10 @@ const populateUserAvatar = async (userObj: any) => {
   if (!userObj) return null;
   if (userObj.profilePicture?.storageKey) {
     try {
-      const url = await getPresignedFileUrl(userObj.profilePicture.storageKey, 3600);
+      const url = await getPresignedFileUrl(
+        userObj.profilePicture.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
       return {
         ...userObj,
         profilePicture: {
@@ -83,8 +87,8 @@ const populateUserAvatar = async (userObj: any) => {
           url,
         },
       };
-    } catch (err) {
-      console.warn("Failed to generate presigned URL for user avatar:", err);
+    } catch {
+      console.warn("Failed to generate signed URL for user avatar");
     }
   }
   return {
@@ -131,9 +135,12 @@ export const getTasks = async (
 
       if (firstImage?.storageKey) {
         try {
-          coverImageUrl = await getPresignedFileUrl(firstImage.storageKey, 3600);
-        } catch (err) {
-          console.warn("Failed to generate presigned URL for task cover image:", err);
+          coverImageUrl = await getPresignedFileUrl(
+            firstImage.storageKey,
+            env.supabase.signedUrlExpiresIn
+          );
+        } catch {
+          console.warn("Failed to generate signed URL for task cover image");
         }
       }
 
@@ -186,9 +193,12 @@ export const getTaskById = async (taskId: string) => {
   let coverImageUrl: string | null = null;
   if (firstImage?.storageKey) {
     try {
-      coverImageUrl = await getPresignedFileUrl(firstImage.storageKey, 3600);
-    } catch (err) {
-      console.warn("Failed to generate presigned URL for task cover image:", err);
+      coverImageUrl = await getPresignedFileUrl(
+        firstImage.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
+    } catch {
+      console.warn("Failed to generate signed URL for task cover image");
     }
   }
 

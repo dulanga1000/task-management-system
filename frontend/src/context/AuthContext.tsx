@@ -94,12 +94,7 @@ export function AuthProvider({
 
     const initializeAuth = async () => {
       try {
-        console.log(
-          "[Auth] Restoring session..."
-        );
-
         // Only ONE refresh request can happen at a time.
-        
         const token =
           await restoreSessionOnce();
 
@@ -109,12 +104,7 @@ export function AuthProvider({
 
         setAccessToken(token);
 
-        console.log(
-          "[Auth] Access token restored"
-        );
-
-        // Now that Axios has the access token,request the current user.
-
+        // Now that Axios has the access token, request the current user.
         const userResponse =
           await getCurrentUser();
 
@@ -125,16 +115,7 @@ export function AuthProvider({
         setUser(
           userResponse.data
         );
-
-        console.log(
-          "[Auth] User restored:",
-          userResponse.data.email
-        );
-      } catch (error: any) {
-        console.log(
-          "[Auth] No active session"
-        );
-
+      } catch {
         if (!mounted) {
           return;
         }

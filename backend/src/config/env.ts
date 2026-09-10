@@ -48,5 +48,6 @@ export const env = {
     s3AccessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID || "",
     s3SecretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY || "",
     s3Bucket: process.env.SUPABASE_S3_BUCKET || "task-attachments",
+    signedUrlExpiresIn: Number(process.env.SUPABASE_S3_SIGNED_URL_EXPIRES_IN) || 300,
   },
 };

@@ -9,6 +9,7 @@ import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 
 import { errorMiddleware } from "./middleware/error.middleware.js";
+import { apiRateLimiter } from "./middleware/rate-limit.middleware.js";
 
 const app = express();
 
@@ -32,13 +33,14 @@ app.use(
   })
 );
 
-// BODY PARSING
+// BODY PARSING (Protected against payload DoS)
 
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
 
 app.use(
   express.urlencoded({
     extended: true,
+    limit: "10kb",
   })
 );
 
@@ -54,6 +56,10 @@ app.get("/api/health", (_req, res) => {
       "Task Management System API is running",
   });
 });
+
+// RATE LIMITING (Global API Protection)
+
+app.use("/api", apiRateLimiter);
 
 // ROUTES
 

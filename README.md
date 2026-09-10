@@ -104,6 +104,8 @@ Here are key previews of the TaskFlow platform interface:
 - [x] Secure `HttpOnly`, `SameSite=None; Secure` (production) / `SameSite=Lax` (development) cookie configuration with path `/`
 - [x] Next.js reverse proxy rewrites (`/api/:path*`) eliminating third-party cookie restrictions across hosted domains
 - [x] Express reverse proxy trust (`trust proxy: 1`) ensuring per-client rate limiting behind Azure load balancers
+- [x] Strict request payload limits (10 KB) and global API rate limiting protecting against Denial-of-Service (DoS)
+- [x] Zero client-side console logging in production to prevent sensitive PII and authentication credential leakage
 - [x] Role-Based Access Control (`USER` and `ADMIN` roles)
 - [x] Synchronized cross-tab session termination via `BroadcastChannel`
 - [x] Configurable client-side idle inactivity timeout with countdown warning modal
@@ -447,7 +449,10 @@ To eliminate modern browser cross-site cookie restrictions (such as Apple Safari
 ### Rate Limiting & Security Headers
 - **`authRateLimiter`**: Restricts `POST /api/auth/login` and `POST /api/auth/register` to 10 requests per 15 minutes per client IP address.
 - **`refreshRateLimiter`**: Restricts `POST /api/auth/refresh` to 60 requests per 15 minutes per client IP address.
+- **`apiRateLimiter`**: Global API rate limiter restricting general `/api` traffic to 300 requests per 15 minutes per client IP address to prevent brute-force and DoS floods.
+- **Payload Size Limits**: Strict 10 KB caps on JSON and URL-encoded request bodies (`express.json({ limit: "10kb" })`) to protect against memory exhaustion attacks, while file attachments are handled independently via Multer streaming.
 - **Helmet**: Injects security headers including `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and strict referrer policies.
+- **Zero Client PII Logging**: All sensitive user data, emails, and session restoration details are stripped from client-side browser console logs in production.
 
 ---
 
@@ -465,7 +470,7 @@ TaskFlow features an automated inactivity detection mechanism implemented in `us
 
 ## Task Attachments & Cloud Storage
 
-Task attachments are stored in an S3-compatible cloud object store (such as Supabase Storage) with database metadata stored in MongoDB.
+Task attachments and user profile pictures are stored in an S3-compatible cloud object store (Supabase Storage) using **strictly private storage buckets**, with file metadata stored in MongoDB.
 
 ### Architecture Flow
 
@@ -483,20 +488,32 @@ Express API (Multer Memory Storage)
   └── 3. Magic Bytes signature check (prevents file extension spoofing)
   │
   ▼
-AWS S3 Client (@aws-sdk/client-s3)
+AWS S3 Client (@aws-sdk/client-s3 on Backend)
   │
   ├── Object uploaded to: tasks/{taskId}/{images|pdfs}/{safeBase}-{timestamp}-{random}.{ext}
-  └── Presigned URL generated with 1-hour expiration
+  └── Presigned URL generated with 5-minute expiration (default 300s)
   │
   ▼
 MongoDB Attachment Document Created
   (task ID, original name, storageKey, bucket, mimeType, size, type, uploadedBy)
+  * Note: MongoDB stores relative storageKey paths only, NEVER permanent public URLs!
 ```
 
 ### Access & Deletion Control
-- The cloud bucket remains **private**. Files are never publicly readable directly.
-- Download and view URLs are delivered as short-lived (3600 seconds) presigned URLs generated on demand.
-- When an attachment is deleted (`DELETE /api/tasks/:taskId/attachments/:attachmentId`), the backend removes the object from cloud storage first before removing the document from MongoDB.
+- **Strictly Private Bucket**: The cloud storage bucket remains **private** (Public bucket toggle disabled). Files cannot be accessed directly via static public URLs.
+- **Short-Lived Signed URLs**: All download, view, and thumbnail URLs are delivered as short-lived (default 300 seconds / 5 minutes, configurable via `SUPABASE_S3_SIGNED_URL_EXPIRES_IN`) AWS S3 presigned URLs generated on demand by the backend.
+- **Strict Role-Based Authorization**: Endpoints generating attachment URLs (`GET /api/tasks/:taskId/attachments` and `GET /api/tasks/:taskId/attachments/:attachmentId/url`) enforce strict backend authorization (verifying task access permissions).
+- **Auto-Refresh on Token Expiration**: The frontend attachment components (`AttachmentItem.tsx`) detect expired signed URLs and automatically request fresh signed URLs on demand without requiring a full page or task reload.
+- **Cascade Deletion**: When an attachment is deleted (`DELETE /api/tasks/:taskId/attachments/:attachmentId`), the backend securely purges the object from private cloud storage before removing the document from MongoDB. When a task is deleted, all associated cloud objects are cleaned up.
+
+### Supabase Storage Bucket Configuration
+To configure private storage in Supabase:
+1. Open your **Supabase Dashboard** and navigate to **Storage** > **Buckets**.
+2. Create or select your bucket (e.g., `task-attachments`).
+3. Click the three-dots menu next to the bucket name and select **Edit bucket**.
+4. Ensure **"Public bucket"** is **toggled OFF** (Private).
+5. Generate S3 credentials from **Project Settings** > **Storage** > **S3 Access Keys** and place them exclusively in `backend/.env`.
+6. Frontend never receives or holds Supabase S3 credentials or client keys.
 
 ---
 
@@ -505,9 +522,9 @@ MongoDB Attachment Document Created
 Authenticated users can manage their identity via dedicated profile endpoints:
 
 - **Profile Information**: Update first name, last name, username, and email. Unique fields are validated to avoid collisions.
-- **Profile Picture Upload**: Users can upload a photo (JPG, PNG, WEBP up to 5 MB) validated via magic bytes. The file is uploaded to `profile-pictures/{userId}/profile-{uniqueId}.{ext}`. Any existing photo is automatically removed from cloud storage before saving the new one.
-- **Profile Picture Deletion**: Cleans up the cloud object and resets the user document's `profilePicture` field to `null`.
-- **System-Wide Avatars**: Presigned avatar URLs are dynamically populated and displayed in the main navbar, user dropdown, Kanban cards, task detail modal, activity stream, and admin user table.
+- **Profile Picture Upload**: Users can upload a photo (JPG, PNG, WEBP up to 5 MB) validated via magic bytes. The file is uploaded to `profile-pictures/{userId}/profile-{uniqueId}.{ext}` in private cloud storage. Any existing photo is automatically removed from cloud storage before saving the new one.
+- **Profile Picture Deletion**: Cleans up the private cloud object and resets the user document's `profilePicture` field to `null`.
+- **System-Wide Avatars**: Short-lived (300 seconds) presigned avatar URLs are dynamically generated by the backend and displayed across the main navbar, user dropdown, Kanban cards, task detail modal, activity stream, and admin user table.
 
 ---
 
@@ -811,6 +828,7 @@ cp backend/.env.example backend/.env
 | `SUPABASE_S3_ACCESS_KEY_ID` | Cloud storage access key ID | `your-s3-access-key` |
 | `SUPABASE_S3_SECRET_ACCESS_KEY` | Cloud storage secret access key | `your-s3-secret-key` |
 | `SUPABASE_S3_BUCKET` | Cloud storage bucket name | `task-attachments` |
+| `SUPABASE_S3_SIGNED_URL_EXPIRES_IN` | Presigned URL lifespan in seconds | `300` (Default: 5 minutes) |
 
 ### Frontend (`frontend/.env`)
 
