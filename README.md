@@ -36,12 +36,9 @@ TaskFlow is a modern, full-stack task management platform built with Next.js, Ex
 - [CORS Configuration](#cors-configuration)
 - [Error Handling](#error-handling)
 - [Server-Side Pagination](#server-side-pagination)
-- [Testing](#testing)
-- [Screenshots](#screenshots)
 - [Demo Credentials](#demo-credentials)
 - [Future Improvements](#future-improvements)
 - [Contributing](#contributing)
-- [License](#license)
 - [Author & Submission Information](#author--submission-information)
 
 ---
