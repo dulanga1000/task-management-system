@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import {Clock,MoreHorizontal,UserPlus,Paperclip,AlignLeft} from "lucide-react";
+import { Clock, MoreHorizontal, UserPlus, Paperclip, AlignLeft, CheckSquare } from "lucide-react";
 import type { Task } from "@/types/task";
 
 interface TaskCardProps {
@@ -114,7 +114,7 @@ export default function TaskCard({
             </div>
           )}
 
-          {/* Attachment Indicator (📎 count) */}
+          {/* Attachment Indicator (attachment count) */}
           {typeof task.attachmentCount === "number" && task.attachmentCount > 0 && (
             <div
               className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
@@ -139,7 +139,7 @@ export default function TaskCard({
               }`}
               title="Checklist progress"
             >
-              <span>☑️</span>
+              <CheckSquare className="h-3 w-3" />
               <span>
                 {checklistCompleted}/{checklistTotal}
               </span>
@@ -165,14 +165,25 @@ export default function TaskCard({
 
         {/* Assigned User Avatar or Quick Assign */}
         {task.assignedUser ? (
-          <div
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white shadow-xs"
-            title={`Assigned to ${task.assignedUser.firstName} ${
-              task.assignedUser.lastName || ""
-            }`}
-          >
-            {assigneeInitials}
-          </div>
+          task.assignedUser.profilePicture?.url ? (
+            <img
+              src={task.assignedUser.profilePicture.url}
+              alt={task.assignedUser.firstName}
+              className="h-6 w-6 shrink-0 rounded-full object-cover ring-2 ring-white shadow-xs"
+              title={`Assigned to ${task.assignedUser.firstName} ${
+                task.assignedUser.lastName || ""
+              }`}
+            />
+          ) : (
+            <div
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white shadow-xs"
+              title={`Assigned to ${task.assignedUser.firstName} ${
+                task.assignedUser.lastName || ""
+              }`}
+            >
+              {assigneeInitials}
+            </div>
+          )
         ) : onAssign ? (
           <button
             type="button"

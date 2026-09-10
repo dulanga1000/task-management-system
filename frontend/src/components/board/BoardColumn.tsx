@@ -64,18 +64,18 @@ export default function BoardColumn({
   });
 
   return (
-    <div className="flex w-full md:w-80 lg:w-[350px] shrink-0 flex-col rounded-2xl border border-gray-200/70 bg-gray-50/70 backdrop-blur-md shadow-xs">
+    <div className="flex w-full md:w-80 lg:w-[350px] shrink-0 flex-col rounded-2xl border border-slate-200/80 bg-slate-100/60 shadow-xs">
       {/* Column Header */}
-      <div className="flex items-center justify-between border-b border-gray-200/60 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-3.5 bg-slate-50/80 rounded-t-2xl">
         <div className="flex items-center gap-2.5">
           <Icon className={`h-4 w-4 ${config.color}`} />
-          <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
+          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
             {title}
           </h2>
         </div>
 
         <span
-          className={`flex h-6 min-w-[24px] items-center justify-center rounded-full border px-2 text-xs font-bold ${config.count}`}
+          className={`flex h-5 min-w-[20px] items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${config.count}`}
         >
           {tasks.length}
         </span>
@@ -84,16 +84,16 @@ export default function BoardColumn({
       {/* Droppable Task List Container */}
       <div
         ref={setNodeRef}
-        className={`flex flex-1 flex-col gap-3 p-3 min-h-[500px] transition-all duration-200 ${
+        className={`flex flex-1 flex-col gap-3 p-3 min-h-[520px] transition-all duration-200 ${
           isOver
-            ? "bg-primary/[0.04] ring-2 ring-primary/30 ring-inset rounded-b-2xl"
+            ? "bg-blue-50/30 ring-2 ring-blue-500/30 ring-inset rounded-b-2xl"
             : ""
         }`}
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.length === 0 ? (
-            <div className="pointer-events-none flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-gray-200/80 bg-white/40 p-6">
-              <p className="text-xs font-medium text-gray-400">
+            <div className="pointer-events-none flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white/60 p-6">
+              <p className="text-xs font-medium text-slate-400">
                 Drop tasks here
               </p>
             </div>

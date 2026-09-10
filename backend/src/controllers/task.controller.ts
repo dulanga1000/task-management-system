@@ -19,7 +19,8 @@ export const create = async (
 
     const task = await createTask(
       req.body,
-      req.user.userId
+      req.user.userId,
+      req.user.role
     );
 
     res.status(201).json({

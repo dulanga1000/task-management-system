@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { Link2 } from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -196,10 +197,10 @@ export default function RichTextEditor({
         <button
           type="button"
           onClick={handleLink}
-          className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer"
+          className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-700"
           title="Insert Link (Ctrl+K)"
         >
-          🔗
+          <Link2 className="h-3.5 w-3.5" />
         </button>
 
         {/* Inline Code */}

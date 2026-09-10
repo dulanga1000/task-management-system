@@ -28,10 +28,14 @@ export const createTaskSchema = z.object({
   description: z
     .string({ error: "Description is required" })
     .trim()
-    .max(50000, {
-      error: "Description must be at most 50000 characters",
+    .min(1, {
+      error: "Description is required",
+    })
+    .max(10000, {
+      error: "Description must be at most 10000 characters",
     }),
 
+  assignedUserId: z.string().nullable().optional(),
   labels: z.array(labelSchema).optional(),
   dueDate: z.string().datetime().nullable().optional(),
   checklist: z.array(checklistItemSchema).optional(),
@@ -55,8 +59,11 @@ export const updateTaskSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(50000, {
-      error: "Description must be at most 50000 characters",
+    .min(1, {
+      error: "Description cannot be empty",
+    })
+    .max(10000, {
+      error: "Description must be at most 10000 characters",
     })
     .optional(),
 
@@ -77,8 +84,9 @@ export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 // Assign task schema
 export const assignTaskSchema = z.object({
   assignedUserId: z
-    .string({ error: "Assigned user ID is required" })
-    .min(1, { error: "Assigned user ID is required" }),
+    .string()
+    .nullable()
+    .optional(),
 });
 
 export type AssignTaskInput = z.infer<typeof assignTaskSchema>;

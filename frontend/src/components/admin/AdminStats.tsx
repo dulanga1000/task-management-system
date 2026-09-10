@@ -36,11 +36,11 @@ export default function AdminStats({
   return (
     <section>
       <div className="mb-4">
-        <h2 className="text-base font-bold text-gray-900 tracking-tight">
-          System Overview & Metrics
+        <h2 className="text-base font-bold text-slate-900 tracking-tight">
+          System Metrics
         </h2>
-        <p className="text-xs text-gray-400 font-medium">
-          Accurate system-wide metrics across all users and tasks.
+        <p className="text-xs text-slate-500 font-medium">
+          Real-time metrics across all workspace accounts and tasks.
         </p>
       </div>
 
@@ -51,8 +51,8 @@ export default function AdminStats({
           value={loading ? "..." : totalUsers}
           subtitle="Registered accounts"
           icon={Users}
-          iconColor="text-purple-600"
-          iconBg="bg-purple-50"
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
         />
 
         {/* Total Tasks */}

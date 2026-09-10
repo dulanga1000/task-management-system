@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { CheckSquare, X } from "lucide-react";
 import type { TaskChecklistItem } from "@/types/task";
 
 interface ChecklistSectionProps {
@@ -52,7 +53,7 @@ export default function ChecklistSection({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-          <span>☑️</span>
+          <CheckSquare className="h-4 w-4 text-blue-600" />
           <span>Checklist</span>
         </div>
 
@@ -111,10 +112,11 @@ export default function ChecklistSection({
             <button
               type="button"
               onClick={() => deleteItem(item.id)}
-              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 text-sm font-semibold transition-opacity px-1 cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-opacity p-0.5 cursor-pointer"
               title="Delete item"
+              aria-label="Delete item"
             >
-              ✕
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}

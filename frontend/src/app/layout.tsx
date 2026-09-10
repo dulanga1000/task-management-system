@@ -13,8 +13,15 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "TaskFlow",
-  description:
-    "A modern task management platform",
+  description: "A modern task management platform",
+  icons: {
+    icon: [
+      { url: "/logo.png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +34,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} antialiased`}
     >
+      <head>
+        <link rel="icon" href="/logo.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+      </head>
       <body className="min-h-screen flex flex-col">
         <AuthProvider>
           {children}

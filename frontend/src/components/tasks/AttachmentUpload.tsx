@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, Loader2, X } from "lucide-react";
 
 interface AttachmentUploadProps {
   onUpload: (file: File) => Promise<void>;
@@ -174,9 +174,10 @@ export const AttachmentUpload: React.FC<AttachmentUploadProps> = ({
           <button
             type="button"
             onClick={() => setError(null)}
-            className="text-red-400 hover:text-red-600 text-sm font-semibold cursor-pointer px-1"
+            className="text-red-400 hover:text-red-600 cursor-pointer p-0.5"
+            aria-label="Dismiss error"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}

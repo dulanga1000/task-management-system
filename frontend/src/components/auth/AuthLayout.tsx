@@ -12,83 +12,57 @@ export default function AuthLayout({
   description,
 }: AuthLayoutProps) {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto flex min-h-screen max-w-[1440px]">
-        {/* Brand Panel */}
-        <section className="hidden w-[44%] bg-gray-950 lg:flex">
-          <div className="flex w-full flex-col px-12 py-10 xl:px-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold !text-white">
-                T
-              </div>
+    <main className="min-h-screen bg-slate-50 flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8 selection:bg-blue-100 selection:text-blue-900">
+      {/* Top Brand Header */}
+      <div className="flex justify-center">
+        <Link
+          href="/"
+          className="group flex items-center gap-2.5 transition-transform duration-150 active:scale-95"
+          aria-label="TaskFlow home"
+        >
+          <img
+            src="/logo.png"
+            alt="TaskFlow Logo"
+            className="h-9 w-9 rounded-xl object-contain shadow-xs"
+          />
+          <span className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+            TaskFlow
+          </span>
+        </Link>
+      </div>
 
-              <span className="text-lg font-bold tracking-tight !text-white">
-                TaskFlow
-              </span>
-            </Link>
-
-            {/* Main Brand Content */}
-            <div className="my-auto max-w-lg">
-              <p className="text-sm font-semibold text-blue-400">
-                Task management made simple
-              </p>
-
-              <h2 className="mt-4 text-4xl font-bold leading-[1.15] tracking-tight text-white xl:text-5xl">
-                Keep your work organized and moving forward.
-              </h2>
-
-              <p className="mt-6 max-w-md text-base leading-7 text-gray-400">
-                Create tasks, track progress, and collaborate with your team
-                from one focused workspace.
-              </p>
-
-              {/* Small visual indicator */}
-              <div className="mt-10 flex items-center gap-3">
-                <div className="h-1.5 w-8 rounded-full bg-blue-500" />
-                <div className="h-1.5 w-2 rounded-full bg-gray-700" />
-                <div className="h-1.5 w-2 rounded-full bg-gray-700" />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <p className="text-xs text-gray-600">
-              © {new Date().getFullYear()} TaskFlow. All rights reserved.
+      {/* Centered Auth Card */}
+      <div className="my-auto py-8">
+        <div className="w-full max-w-[440px] mx-auto bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/60 p-7 sm:p-9">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              {description}
             </p>
           </div>
-        </section>
 
-        {/* Form Panel */}
-        <section className="flex w-full items-center justify-center bg-white px-6 py-12 lg:w-[56%] lg:px-12">
-          <div className="w-full max-w-[420px]">
-            {/* Mobile Logo */}
-            <Link
-              href="/"
-              className="mb-10 flex items-center justify-center gap-2 lg:hidden"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold !text-white">
-                T
-              </div>
+          {children}
+        </div>
+      </div>
 
-              <span className="text-lg font-bold tracking-tight text-gray-900">
-                TaskFlow
-              </span>
-            </Link>
-
-            {/* Heading */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-950">
-                {title}
-              </h1>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                {description}
-              </p>
-            </div>
-
-            {children}
-          </div>
-        </section>
+      {/* Bottom Legal & Copyright */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-slate-500 py-2">
+        <span>© {new Date().getFullYear()} TaskFlow Inc.</span>
+        <div className="flex items-center gap-4">
+          <Link href="/privacy" className="hover:text-slate-700 transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-slate-300">•</span>
+          <Link href="/terms" className="hover:text-slate-700 transition-colors">
+            Terms of Service
+          </Link>
+          <span className="text-slate-300">•</span>
+          <Link href="/security" className="hover:text-slate-700 transition-colors">
+            Security
+          </Link>
+        </div>
       </div>
     </main>
   );

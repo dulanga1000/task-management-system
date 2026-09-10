@@ -13,13 +13,33 @@ import { logActivity } from "./activity.service.js";
 // Create a new task
 export const createTask = async (
   data: CreateTaskInput,
-  creatorId: string
+  creatorId: string,
+  creatorRole?: UserRole
 ) => {
+  let assignedUserId: any = null;
+
+  if (data.assignedUserId && data.assignedUserId.trim() !== "") {
+    validateObjectId(data.assignedUserId, "assigned user ID");
+    const targetUser = await User.findById(data.assignedUserId);
+    if (!targetUser) {
+      throw new AppError("Assigned user not found", 404);
+    }
+
+    const isAdmin = creatorRole === USER_ROLES.ADMIN;
+    if (!isAdmin) {
+      // Normal users can only assign eligible unassigned tasks to themselves
+      if (data.assignedUserId !== creatorId) {
+        throw new AppError("Normal users can only assign tasks to themselves", 403);
+      }
+    }
+    assignedUserId = targetUser._id;
+  }
+
   const task = await Task.create({
     title: data.title,
     description: data.description,
     creator: creatorId,
-    assignedUser: null,
+    assignedUser: assignedUserId,
     labels: data.labels || [],
     dueDate: data.dueDate ? new Date(data.dueDate) : null,
     checklist: data.checklist || [],
@@ -29,6 +49,16 @@ export const createTask = async (
     newValue: task.status,
   });
 
+  if (assignedUserId) {
+    const assignedUser = await User.findById(assignedUserId);
+    const assigneeDisplayName = assignedUser
+      ? `${assignedUser.firstName} ${assignedUser.lastName}`.trim() || assignedUser.username
+      : "User";
+    await logActivity(task._id.toString(), creatorId, "TASK_ASSIGNED", {
+      assignedToName: assigneeDisplayName,
+    });
+  }
+
   return getTaskById(task._id.toString());
 };
 
@@ -36,6 +66,31 @@ export interface GetTasksResult {
   tasks: any[];
   pagination: PaginationMeta;
 }
+
+const populateUserAvatar = async (userObj: any) => {
+  if (!userObj) return null;
+  if (userObj.profilePicture?.storageKey) {
+    try {
+      const url = await getPresignedFileUrl(userObj.profilePicture.storageKey, 3600);
+      return {
+        ...userObj,
+        profilePicture: {
+          storageKey: userObj.profilePicture.storageKey,
+          mimeType: userObj.profilePicture.mimeType,
+          size: userObj.profilePicture.size,
+          updatedAt: userObj.profilePicture.updatedAt,
+          url,
+        },
+      };
+    } catch (err) {
+      console.warn("Failed to generate presigned URL for user avatar:", err);
+    }
+  }
+  return {
+    ...userObj,
+    profilePicture: null,
+  };
+};
 
 export const getTasks = async (
   params: PaginationParams = {}
@@ -46,11 +101,11 @@ export const getTasks = async (
     Task.find()
       .populate(
         "creator",
-        "firstName lastName username email"
+        "firstName lastName username email profilePicture"
       )
       .populate(
         "assignedUser",
-        "firstName lastName username email"
+        "firstName lastName username email profilePicture"
       )
       .sort({ order: 1, createdAt: -1 })
       .skip(skip)
@@ -81,8 +136,15 @@ export const getTasks = async (
         }
       }
 
+      const [creator, assignedUser] = await Promise.all([
+        populateUserAvatar(task.creator),
+        populateUserAvatar(task.assignedUser),
+      ]);
+
       return {
         ...task,
+        creator,
+        assignedUser,
         attachmentCount,
         coverImageUrl,
       };
@@ -104,11 +166,11 @@ export const getTaskById = async (taskId: string) => {
   const task = await Task.findById(taskId)
     .populate(
       "creator",
-      "firstName lastName username email"
+      "firstName lastName username email profilePicture"
     )
     .populate(
       "assignedUser",
-      "firstName lastName username email"
+      "firstName lastName username email profilePicture"
     )
     .lean();
 
@@ -129,8 +191,15 @@ export const getTaskById = async (taskId: string) => {
     }
   }
 
+  const [creator, assignedUser] = await Promise.all([
+    populateUserAvatar(task.creator),
+    populateUserAvatar(task.assignedUser),
+  ]);
+
   return {
     ...task,
+    creator,
+    assignedUser,
     attachmentCount,
     coverImageUrl,
   };
@@ -222,16 +291,36 @@ export const assignTask = async (
   userRole: UserRole
 ) => {
   validateObjectId(taskId, "task ID");
-  validateObjectId(
-    data.assignedUserId,
-    "assigned user ID"
-  );
 
   const task = await Task.findById(taskId);
 
   if (!task) {
     return null;
   }
+
+  const isAdmin = userRole === USER_ROLES.ADMIN;
+
+  // Unassign task if assignedUserId is null or empty
+  if (!data.assignedUserId || data.assignedUserId.trim() === "") {
+    if (!isAdmin) {
+      throw new AppError(
+        "Only administrators can unassign tasks",
+        403
+      );
+    }
+
+    task.assignedUser = null;
+    await task.save();
+
+    await logActivity(task._id.toString(), userId, "TASK_UNASSIGNED", {});
+
+    return getTaskById(task._id.toString());
+  }
+
+  validateObjectId(
+    data.assignedUserId,
+    "assigned user ID"
+  );
 
   const assignedUser = await User.findById(
     data.assignedUserId
@@ -244,7 +333,6 @@ export const assignTask = async (
     );
   }
 
-  const isAdmin = userRole === USER_ROLES.ADMIN;
   const assigneeDisplayName = `${assignedUser.firstName} ${assignedUser.lastName}`.trim() || assignedUser.username;
 
   if (isAdmin) {

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Check, X } from "lucide-react";
 import type { TaskLabel } from "@/types/task";
 
 export const PRESET_LABELS: TaskLabel[] = [
@@ -42,9 +43,10 @@ export default function LabelsPopover({
         <button
           type="button"
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-sm font-semibold cursor-pointer"
+          className="text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+          aria-label="Close"
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
       </div>
 
@@ -67,7 +69,7 @@ export default function LabelsPopover({
                 className={`flex-1 rounded-md px-2.5 py-1 text-xs font-semibold shadow-xs flex items-center justify-between ${preset.color}`}
               >
                 <span>{preset.name}</span>
-                {active && <span>✓</span>}
+                {active && <Check className="h-3.5 w-3.5 stroke-[2.5]" />}
               </div>
             </div>
           );

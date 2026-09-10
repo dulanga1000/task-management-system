@@ -53,20 +53,20 @@ export default function UserTable({
   }, [tasks]);
 
   return (
-    <section className="rounded-2xl border border-gray-200/80 bg-white shadow-xs overflow-hidden">
+    <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <h2 className="text-sm font-bold text-gray-900 tracking-tight">
+          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
             {title}
           </h2>
-          <p className="text-xs text-gray-400 font-medium">
+          <p className="text-xs text-slate-400 font-medium">
             {subtitle}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
             {displayedUsers.length}{" "}
             {displayedUsers.length === 1 ? "user" : "users"}
           </span>
@@ -74,7 +74,7 @@ export default function UserTable({
           {showViewAllLink && (
             <Link
               href="/admin/users"
-              className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
             >
               <span>View all</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -87,44 +87,44 @@ export default function UserTable({
       <div className="overflow-x-auto">
         {displayedUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400 border border-gray-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 border border-slate-200">
               <Inbox className="h-6 w-6" />
             </div>
-            <p className="mt-3 text-sm font-bold text-gray-800">
+            <p className="mt-3 text-sm font-bold text-slate-800">
               No users found
             </p>
-            <p className="mt-1 text-xs text-gray-400 max-w-xs">
+            <p className="mt-1 text-xs text-slate-400 max-w-xs">
               No registered user accounts match your criteria.
             </p>
           </div>
         ) : (
           <table className="w-full min-w-[750px] text-left">
-            <thead className="bg-gray-50/70 border-b border-gray-100">
+            <thead className="bg-slate-50/70 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   User
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Email
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Role
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Assigned Workload
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Joined Date
                 </th>
                 {hasActions && (
-                  <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Actions
                   </th>
                 )}
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {displayedUsers.map((u) => (
                 <UserRow
                   key={u.id}

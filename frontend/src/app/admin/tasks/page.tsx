@@ -138,11 +138,11 @@ export default function AdminTasksPage() {
     tasksLoading
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
-          <p className="mt-4 text-xs font-semibold text-gray-500 tracking-wide">
-            Loading task governance center...
+          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-blue-500/20 border-t-blue-600" />
+          <p className="mt-4 text-xs font-semibold text-slate-500 tracking-wide">
+            Loading tasks...
           </p>
         </div>
       </main>
@@ -193,35 +193,35 @@ export default function AdminTasksPage() {
   const error = usersError || tasksError;
 
   return (
-    <main className="min-h-screen bg-gray-50/60 pb-16">
+    <main className="min-h-screen bg-slate-50/60 pb-16">
       <AdminNavigation />
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 space-y-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                 <CheckSquare className="h-4 w-4" />
               </div>
-              <h1 className="text-xl font-bold text-gray-950 tracking-tight">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                 Tasks Management
               </h1>
             </div>
-            <p className="mt-1 text-xs text-gray-400 font-medium">
+            <p className="mt-1 text-xs text-slate-500 font-medium">
               View, search, filter, reassign, or adjust statuses for all system tasks.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs">
-              Total Platform Tasks: {totalTasksCount}
+            <span className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs">
+              Total Tasks: {totalTasksCount}
             </span>
 
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-all cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>Create Task</span>
@@ -230,7 +230,7 @@ export default function AdminTasksPage() {
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
             {error}
           </div>
         )}

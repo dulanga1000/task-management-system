@@ -75,19 +75,19 @@ export default function EditUserModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/45 px-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xl">
         {/* Modal Header */}
-        <div className="flex items-start justify-between border-b border-gray-100 pb-4">
+        <div className="flex items-start justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-950">
+              <h2 className="text-base font-bold text-slate-900">
                 Edit User Account
               </h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-500">
                 Update account profile and identity information for standard team members.
               </p>
             </div>
@@ -96,7 +96,7 @@ export default function EditUserModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -104,7 +104,7 @@ export default function EditUserModal({
 
         {/* Error Banner */}
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-600">
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-600">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -117,7 +117,7 @@ export default function EditUserModal({
             <div>
               <label
                 htmlFor="user-firstname"
-                className="mb-1.5 block text-xs font-semibold text-gray-700"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
               >
                 First Name
               </label>
@@ -129,7 +129,7 @@ export default function EditUserModal({
                 required
                 minLength={2}
                 maxLength={100}
-                className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs text-gray-800 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
@@ -137,7 +137,7 @@ export default function EditUserModal({
             <div>
               <label
                 htmlFor="user-lastname"
-                className="mb-1.5 block text-xs font-semibold text-gray-700"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
               >
                 Last Name
               </label>
@@ -149,7 +149,7 @@ export default function EditUserModal({
                 required
                 minLength={2}
                 maxLength={100}
-                className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs text-gray-800 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function EditUserModal({
           <div>
             <label
               htmlFor="user-username"
-              className="mb-1.5 block text-xs font-semibold text-gray-700"
+              className="mb-1.5 block text-xs font-semibold text-slate-700"
             >
               Username
             </label>
@@ -170,7 +170,7 @@ export default function EditUserModal({
               required
               minLength={2}
               maxLength={100}
-              className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs text-gray-800 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
 
@@ -178,7 +178,7 @@ export default function EditUserModal({
           <div>
             <label
               htmlFor="user-email"
-              className="mb-1.5 block text-xs font-semibold text-gray-700"
+              className="mb-1.5 block text-xs font-semibold text-slate-700"
             >
               Email Address
             </label>
@@ -188,17 +188,17 @@ export default function EditUserModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs text-gray-800 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
 
           {/* Actions */}
-          <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-gray-100 pt-4">
+          <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="h-9 rounded-xl border border-gray-200 px-4 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="h-9 rounded-xl border border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -206,7 +206,7 @@ export default function EditUserModal({
             <button
               type="submit"
               disabled={saving}
-              className="flex h-9 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer"
+              className="flex h-9 items-center justify-center rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50 transition-all cursor-pointer"
             >
               {saving ? "Saving Changes..." : "Save Changes"}
             </button>

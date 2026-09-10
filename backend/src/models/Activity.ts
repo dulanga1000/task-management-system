@@ -7,6 +7,7 @@ export type ActivityType =
   | "DESCRIPTION_UPDATED"
   | "DETAILS_UPDATED"
   | "TASK_ASSIGNED"
+  | "TASK_UNASSIGNED"
   | "ATTACHMENT_ADDED"
   | "ATTACHMENT_DELETED"
   | "COMMENT_ADDED";
@@ -50,6 +51,7 @@ const activitySchema = new Schema<IActivity>(
         "DESCRIPTION_UPDATED",
         "DETAILS_UPDATED",
         "TASK_ASSIGNED",
+        "TASK_UNASSIGNED",
         "ATTACHMENT_ADDED",
         "ATTACHMENT_DELETED",
         "COMMENT_ADDED",

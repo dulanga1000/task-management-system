@@ -15,6 +15,9 @@ export interface ActivityUser {
   lastName: string;
   username: string;
   email?: string;
+  profilePicture?: {
+    url?: string | null;
+  } | null;
 }
 
 export interface ActivityDetails {

@@ -66,9 +66,17 @@ export default function AdminTaskRow({
       {/* Creator */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600 ring-1 ring-gray-200">
-            {task.creator?.firstName?.charAt(0).toUpperCase() || "?"}
-          </div>
+          {task.creator?.profilePicture?.url ? (
+            <img
+              src={task.creator.profilePicture.url}
+              alt={task.creator.firstName}
+              className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-gray-200"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600 ring-1 ring-gray-200">
+              {task.creator?.firstName?.charAt(0).toUpperCase() || "?"}
+            </div>
+          )}
           <div>
             <p className="text-xs font-semibold text-gray-800">
               {task.creator?.firstName} {task.creator?.lastName}
@@ -84,21 +92,29 @@ export default function AdminTaskRow({
       <td className="px-6 py-4">
         {task.assignedUser ? (
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary ring-1 ring-primary/20">
-              {task.assignedUser.firstName.charAt(0).toUpperCase()}
-            </div>
+            {task.assignedUser.profilePicture?.url ? (
+              <img
+                src={task.assignedUser.profilePicture.url}
+                alt={task.assignedUser.firstName}
+                className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-blue-600/20"
+              />
+            ) : (
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-700 ring-1 ring-blue-600/20">
+                {task.assignedUser.firstName.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
-              <p className="text-xs font-semibold text-gray-800">
+              <p className="text-xs font-semibold text-slate-800">
                 {task.assignedUser.firstName} {task.assignedUser.lastName}
               </p>
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-slate-400">
                 {task.assignedUser.email}
               </p>
             </div>
           </div>
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-            <UserIcon className="h-3 w-3 text-gray-400" />
+          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+            <UserIcon className="h-3 w-3 text-slate-400" />
             Unassigned
           </span>
         )}
@@ -125,7 +141,7 @@ export default function AdminTaskRow({
 
       {/* Created Date */}
       <td className="px-6 py-4">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400">
           <Clock className="h-3 w-3" />
           <span>
             {new Date(task.createdAt).toLocaleDateString(undefined, {
@@ -139,13 +155,13 @@ export default function AdminTaskRow({
 
       {/* Action Buttons */}
       <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1.5">
           {/* Edit Button */}
           {onEdit && (
             <button
               type="button"
               onClick={() => onEdit(task)}
-              className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer"
+              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
               title="Edit task details"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -157,7 +173,7 @@ export default function AdminTaskRow({
           <button
             type="button"
             onClick={() => onReassign(task)}
-            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-xs hover:bg-primary hover:text-white hover:border-primary transition-all cursor-pointer"
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer"
             title="Reassign to another user"
           >
             <UserCheck className="h-3.5 w-3.5" />
@@ -168,7 +184,7 @@ export default function AdminTaskRow({
           <button
             type="button"
             onClick={() => onDelete(task)}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
             title="Delete task"
           >
             <Trash2 className="h-3.5 w-3.5" />

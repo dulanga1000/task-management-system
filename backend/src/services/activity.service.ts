@@ -2,6 +2,32 @@ import Activity, { type ActivityType, type IActivityDetails } from "../models/Ac
 import Task from "../models/Task.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
+import { getPresignedFileUrl } from "../utils/storage.js";
+
+const populateActivityUserAvatar = async (userObj: any) => {
+  if (!userObj) return null;
+  if (userObj.profilePicture?.storageKey) {
+    try {
+      const url = await getPresignedFileUrl(userObj.profilePicture.storageKey, 3600);
+      return {
+        ...userObj,
+        profilePicture: {
+          storageKey: userObj.profilePicture.storageKey,
+          mimeType: userObj.profilePicture.mimeType,
+          size: userObj.profilePicture.size,
+          updatedAt: userObj.profilePicture.updatedAt,
+          url,
+        },
+      };
+    } catch (err) {
+      console.warn("Failed to generate presigned URL for activity user avatar:", err);
+    }
+  }
+  return {
+    ...userObj,
+    profilePicture: null,
+  };
+};
 
 /**
  * Asynchronously log a task activity.
@@ -37,11 +63,21 @@ export const getTaskActivities = async (taskId: string) => {
   }
 
   const activities = await Activity.find({ task: taskId })
-    .populate("user", "firstName lastName username email")
+    .populate("user", "firstName lastName username email profilePicture")
     .sort({ createdAt: -1 })
     .lean();
 
-  return activities;
+  const populatedActivities = await Promise.all(
+    activities.map(async (act) => {
+      const user = await populateActivityUserAvatar(act.user);
+      return {
+        ...act,
+        user,
+      };
+    })
+  );
+
+  return populatedActivities;
 };
 
 
@@ -78,8 +114,12 @@ export const addTaskComment = async (
   });
 
   const populated = await Activity.findById(created._id)
-    .populate("user", "firstName lastName username email")
+    .populate("user", "firstName lastName username email profilePicture")
     .lean();
+
+  if (populated) {
+    populated.user = await populateActivityUserAvatar(populated.user);
+  }
 
   return populated;
 };
