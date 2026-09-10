@@ -16,6 +16,7 @@ TaskFlow is a modern, full-stack task management platform built with Next.js, Ex
 ## Table of Contents
 
 - [Overview](#overview)
+- [Application Screenshots](#application-screenshots)
 - [Features](#features)
 - [User Roles & RBAC Matrix](#user-roles--rbac-matrix)
 - [Task Workflow](#task-workflow)
@@ -52,6 +53,37 @@ TaskFlow is designed to solve organizational bottlenecks for agile product and e
 - **Controlled Task Delegation**: Normal users can create tasks and assign eligible unassigned tasks to themselves, while administrators maintain global assignment, reassignment, and oversight authority.
 - **End-to-End Auditability**: Every task update, status shift, assignment change, and file upload is recorded in an activity feed with timestamps and user attribution.
 - **Hardened Session Security**: Dual-token JWT architecture with atomic refresh-token rotation, token reuse detection, idle session timeout, and cross-tab logout synchronization.
+
+---
+
+## Application Screenshots
+
+Here are key previews of the TaskFlow platform interface:
+
+### 1. Interactive Kanban Board
+> Real-time Kanban board with optimistic status shifting across `TODO`, `DOING`, and `DONE` columns.
+
+![Kanban Board](./screenshots/kanban-board.png)
+
+### 2. Task Details, Attachments & Activity Stream
+> Task management modal showing descriptions, checklists, cloud attachments, and real-time audit activity feed.
+
+![Task Modal & Activity Stream](./screenshots/task-modal.png)
+
+### 3. Administrator Task Management
+> Global task oversight table with server-side pagination, search filters, and reassignment controls.
+
+![Admin Task Management](./screenshots/admin-tasks.png)
+
+### 4. Administrator User Management
+> User administration panel with role management, profile inspection, and member management.
+
+![Admin User Management](./screenshots/admin-users.png)
+
+### 5. Authentication & Landing Page
+> Clean, responsive landing page and secure authentication interface.
+
+![Landing Page](./screenshots/landing-page.png)
 
 ---
 
