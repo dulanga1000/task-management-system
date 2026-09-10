@@ -177,7 +177,10 @@ export const loginUser = async (
   let profilePicture = null;
   if (user.profilePicture?.storageKey) {
     try {
-      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      const url = await getPresignedFileUrl(
+        user.profilePicture.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
       profilePicture = {
         storageKey: user.profilePicture.storageKey,
         mimeType: user.profilePicture.mimeType,
@@ -185,8 +188,8 @@ export const loginUser = async (
         updatedAt: user.profilePicture.updatedAt,
         url,
       };
-    } catch (err) {
-      console.error("Failed to generate presigned URL for profile picture:", err);
+    } catch {
+      console.warn("Failed to generate signed URL for profile picture");
     }
   }
 
@@ -616,7 +619,10 @@ export const getCurrentUser = async (
   let profilePicture = null;
   if (user.profilePicture?.storageKey) {
     try {
-      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      const url = await getPresignedFileUrl(
+        user.profilePicture.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
       profilePicture = {
         storageKey: user.profilePicture.storageKey,
         mimeType: user.profilePicture.mimeType,
@@ -624,8 +630,8 @@ export const getCurrentUser = async (
         updatedAt: user.profilePicture.updatedAt,
         url,
       };
-    } catch (err) {
-      console.error("Failed to generate presigned URL for profile picture:", err);
+    } catch {
+      console.warn("Failed to generate signed URL for profile picture");
     }
   }
 

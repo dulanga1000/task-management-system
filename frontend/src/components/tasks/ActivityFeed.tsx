@@ -161,13 +161,21 @@ export default function ActivityFeed({ taskId, refreshTrigger = 0 }: ActivityFee
 
       {/* Write a comment */}
       <div className="flex gap-2.5 items-start">
-        <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(
-            currentUser?.username || "user"
-          )}`}
-        >
-          {currentInitials}
-        </div>
+        {currentUser?.profilePicture?.url ? (
+          <img
+            src={currentUser.profilePicture.url}
+            alt="My Profile"
+            className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-black/5"
+          />
+        ) : (
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(
+              currentUser?.username || "user"
+            )}`}
+          >
+            {currentInitials}
+          </div>
+        )}
 
         <div className="flex-1">
           <form onSubmit={handleCommentSubmit} className="space-y-2">
@@ -248,11 +256,19 @@ export default function ActivityFeed({ taskId, refreshTrigger = 0 }: ActivityFee
             return (
               <div key={act._id} className="flex items-start gap-2.5 text-xs">
                 {/* Avatar Badge */}
-                <div
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${avatarBg}`}
-                >
-                  {initials}
-                </div>
+                {act.user?.profilePicture?.url ? (
+                  <img
+                    src={act.user.profilePicture.url}
+                    alt={userName}
+                    className="h-7 w-7 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-black/5"
+                  />
+                ) : (
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${avatarBg}`}
+                  >
+                    {initials}
+                  </div>
+                )}
 
                 {/* Content */}
                 <div className="flex-1 space-y-1">
@@ -299,14 +315,23 @@ export default function ActivityFeed({ taskId, refreshTrigger = 0 }: ActivityFee
                             from this card
                           </span>
                         )}
-                        {act.type === "TASK_ASSIGNED" && (
-                          <span>
-                            assigned this task to{" "}
-                            <strong className="font-semibold text-gray-900">
-                              {act.details?.assignedToName || "a team member"}
-                            </strong>
-                          </span>
-                        )}
+                        {act.type === "TASK_ASSIGNED" && (() => {
+                          let assigneeName = act.details?.assignedToName || "a team member";
+                          if (
+                            assigneeName === "Dulanga Bandara" &&
+                            (userName === "MMDN Bandara" || act.user?.username === "dulanga1000")
+                          ) {
+                            assigneeName = userName;
+                          }
+                          return (
+                            <span>
+                              assigned this task to{" "}
+                              <strong className="font-semibold text-gray-900">
+                                {assigneeName}
+                              </strong>
+                            </span>
+                          );
+                        })()}
                         {(act.type === "DETAILS_UPDATED" ||
                           act.type === "TITLE_UPDATED" ||
                           act.type === "DESCRIPTION_UPDATED") && (

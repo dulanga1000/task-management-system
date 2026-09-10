@@ -20,15 +20,23 @@ export default function AdminUserRow({
       {/* User Info & Avatar */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-2 ring-white shadow-xs ${
-              isAdmin
-                ? "bg-purple-100 text-purple-700"
-                : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {user.firstName?.charAt(0).toUpperCase() || "U"}
-          </div>
+          {user.profilePicture?.url ? (
+            <img
+              src={user.profilePicture.url}
+              alt={user.firstName}
+              className="h-9 w-9 shrink-0 rounded-xl object-cover ring-2 ring-white shadow-xs border border-slate-200"
+            />
+          ) : (
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-2 ring-white shadow-xs ${
+                isAdmin
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-blue-100 text-blue-700"
+              }`}
+            >
+              {user.firstName?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
 
           <div>
             <p className="font-semibold text-gray-900 text-xs sm:text-sm">

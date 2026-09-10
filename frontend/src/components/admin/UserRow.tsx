@@ -27,19 +27,27 @@ export default function UserRow({
       {/* User Info & Avatar */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-2 ring-white shadow-xs ${
-              isAdmin
-                ? "bg-purple-100 text-purple-700"
-                : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {user.firstName?.charAt(0).toUpperCase() || "U"}
-          </div>
+          {user.profilePicture?.url ? (
+            <img
+              src={user.profilePicture.url}
+              alt={user.firstName}
+              className="h-9 w-9 shrink-0 rounded-xl object-cover ring-2 ring-white shadow-2xs border border-slate-200"
+            />
+          ) : (
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-2 ring-white shadow-2xs ${
+                isAdmin
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {user.firstName?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
 
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="font-semibold text-gray-900 text-xs sm:text-sm">
+              <p className="font-semibold text-slate-900 text-xs sm:text-sm">
                 {user.firstName} {user.lastName}
               </p>
               {isCurrentUser && (
@@ -48,7 +56,7 @@ export default function UserRow({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">
+            <p className="text-[11px] text-slate-400 font-medium">
               @{user.username}
             </p>
           </div>
@@ -56,7 +64,7 @@ export default function UserRow({
       </td>
 
       {/* Email */}
-      <td className="px-6 py-4 text-xs font-medium text-gray-600">
+      <td className="px-6 py-4 text-xs font-medium text-slate-600">
         {user.email}
       </td>
 
@@ -65,14 +73,14 @@ export default function UserRow({
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
             isAdmin
-              ? "bg-purple-50 text-purple-700 ring-1 ring-purple-600/20"
-              : "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
+              ? "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20"
+              : "bg-slate-100 text-slate-700 ring-1 ring-slate-200"
           }`}
         >
           {isAdmin ? (
-            <ShieldCheck className="h-3 w-3 text-purple-600" />
+            <ShieldCheck className="h-3 w-3 text-blue-600" />
           ) : (
-            <UserIcon className="h-3 w-3 text-gray-500" />
+            <UserIcon className="h-3 w-3 text-slate-500" />
           )}
           <span>{user.role}</span>
         </span>
@@ -81,8 +89,8 @@ export default function UserRow({
       {/* Assigned Tasks Workload */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-1.5">
-          <CheckSquare className="h-3.5 w-3.5 text-gray-400" />
-          <span className="text-xs font-semibold text-gray-800">
+          <CheckSquare className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-xs font-semibold text-slate-800">
             {assignedTasksCount} {assignedTasksCount === 1 ? "task" : "tasks"}
           </span>
         </div>
@@ -90,7 +98,7 @@ export default function UserRow({
 
       {/* Joined Date */}
       <td className="px-6 py-4">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400">
           <Calendar className="h-3 w-3" />
           <span>
             {user.createdAt
@@ -113,7 +121,7 @@ export default function UserRow({
               <button
                 type="button"
                 onClick={() => onEdit(user)}
-                className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer"
+                className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
                 title="Edit user details"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -126,7 +134,7 @@ export default function UserRow({
               <button
                 type="button"
                 onClick={() => onDelete(user)}
-                className="flex items-center gap-1 rounded-lg border border-red-200/80 bg-red-50/50 px-2.5 py-1 text-xs font-semibold text-red-600 shadow-xs hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+                className="flex items-center gap-1 rounded-lg border border-red-200/80 bg-red-50/50 px-2.5 py-1 text-xs font-semibold text-red-600 shadow-2xs hover:bg-red-600 hover:text-white transition-all cursor-pointer"
                 title="Delete user account"
               >
                 <Trash2 className="h-3.5 w-3.5" />

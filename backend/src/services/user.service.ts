@@ -1,6 +1,7 @@
 import User, { type IUser } from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 import Task from "../models/Task.js";
+import Activity from "../models/Activity.js";
 import { USER_ROLES } from "../constants/roles.js";
 import { AppError } from "../utils/app-error.js";
 import { validateObjectId } from "../utils/validate-object-id.js";
@@ -9,6 +10,7 @@ import type { PaginationParams, PaginationMeta } from "../types/pagination.js";
 import type { UpdateUserInput, UpdateProfileInput, ChangePasswordInput } from "../validations/user.validation.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { uploadToStorage, deleteFromStorage, generateProfilePictureKey, getPresignedFileUrl } from "../utils/storage.js";
+import { env } from "../config/env.js";
 
 export interface GetUsersResult {
   users: Omit<IUser, "password">[];
@@ -22,13 +24,16 @@ export const populateProfilePictureUrl = async (userDoc: any) => {
 
   if (user.profilePicture?.storageKey) {
     try {
-      const url = await getPresignedFileUrl(user.profilePicture.storageKey, 3600);
+      const url = await getPresignedFileUrl(
+        user.profilePicture.storageKey,
+        env.supabase.signedUrlExpiresIn
+      );
       user.profilePicture = {
         ...user.profilePicture,
         url,
       };
-    } catch (err) {
-      console.error("Failed to generate presigned URL for user profile picture:", err);
+    } catch {
+      console.warn("Failed to generate signed URL for user profile picture");
     }
   } else {
     user.profilePicture = null;
@@ -125,6 +130,8 @@ export const updateUser = async (
     user.email = data.email.toLowerCase();
   }
 
+  const oldFullName = `${user.firstName} ${user.lastName}`.trim();
+
   if (data.firstName !== undefined) {
     user.firstName = data.firstName;
   }
@@ -134,6 +141,21 @@ export const updateUser = async (
   }
 
   await user.save();
+
+  const newFullName = `${user.firstName} ${user.lastName}`.trim();
+  if (oldFullName && newFullName && oldFullName !== newFullName) {
+    await Activity.updateMany(
+      {
+        $or: [
+          { "details.assignedToUserId": user._id },
+          { "details.assignedToName": oldFullName },
+        ],
+      } as any,
+      {
+        $set: { "details.assignedToName": newFullName },
+      }
+    ).catch((err) => console.warn("Failed to sync activity assignedToName:", err));
+  }
 
   const updated = await User.findById(userId).select("-password").lean();
   return populateProfilePictureUrl(updated);
@@ -230,6 +252,8 @@ export const updateProfile = async (
     user.email = data.email.toLowerCase();
   }
 
+  const oldFullName = `${user.firstName} ${user.lastName}`.trim();
+
   if (data.firstName !== undefined) {
     user.firstName = data.firstName;
   }
@@ -239,6 +263,21 @@ export const updateProfile = async (
   }
 
   await user.save();
+
+  const newFullName = `${user.firstName} ${user.lastName}`.trim();
+  if (oldFullName && newFullName && oldFullName !== newFullName) {
+    await Activity.updateMany(
+      {
+        $or: [
+          { "details.assignedToUserId": user._id },
+          { "details.assignedToName": oldFullName },
+        ],
+      } as any,
+      {
+        $set: { "details.assignedToName": newFullName },
+      }
+    ).catch((err) => console.warn("Failed to sync activity assignedToName:", err));
+  }
 
   const updated = await User.findById(userId).select("-password").lean();
   return populateProfilePictureUrl(updated);
@@ -324,8 +363,8 @@ export const uploadUserProfilePicture = async (
     // Compensating rollback: delete uploaded object from storage
     try {
       await deleteFromStorage(storageKey);
-    } catch (cleanupError) {
-      console.error("Rollback cleanup error:", cleanupError);
+    } catch {
+      console.warn("Rollback cleanup note on profile picture update");
     }
     throw dbError;
   }
@@ -334,8 +373,8 @@ export const uploadUserProfilePicture = async (
   if (oldStorageKey) {
     try {
       await deleteFromStorage(oldStorageKey);
-    } catch (cleanupError) {
-      console.warn("Failed to delete old profile picture from storage:", cleanupError);
+    } catch {
+      console.warn("Note: Old profile picture cleanup deferred");
     }
   }
 

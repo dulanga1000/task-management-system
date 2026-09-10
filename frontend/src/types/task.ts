@@ -9,6 +9,9 @@ export interface TaskUser {
   lastName: string;
   username: string;
   email: string;
+  profilePicture?: {
+    url?: string | null;
+  } | null;
 }
 
 export interface TaskLabel {
@@ -42,6 +45,7 @@ export interface Task {
 export interface CreateTaskData {
   title: string;
   description: string;
+  assignedUserId?: string | null;
   labels?: TaskLabel[];
   dueDate?: string | null;
   checklist?: TaskChecklistItem[];

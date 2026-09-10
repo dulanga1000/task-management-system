@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type {CreateTaskData,Task,TaskStatus,UpdateTaskData,TaskLabel,TaskChecklistItem} from "@/types/task";
+import { Clock, Tag, Calendar, CheckSquare, UserCheck, Check, X } from "lucide-react";
+import type { CreateTaskData, Task, TaskStatus, UpdateTaskData, TaskLabel, TaskChecklistItem } from "@/types/task";
 import type { User } from "@/types/user";
 import useAuth from "@/hooks/useAuth";
 import { AttachmentSection } from "./AttachmentSection";
@@ -158,8 +159,25 @@ export default function TaskModal({
     }
   };
 
+  const isDescriptionEmpty = (text: string) => {
+    if (!text) return true;
+    const stripped = text.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+    return stripped.length === 0;
+  };
+
   const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle || trimmedTitle.length < 2) {
+      setError("Title must be at least 2 characters.");
+      return;
+    }
+
+    if (isDescriptionEmpty(description)) {
+      setError("Description is required.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -168,8 +186,8 @@ export default function TaskModal({
       if (isEditing && task) {
         if (onUpdate) {
           await onUpdate(task._id, {
-            title,
-            description,
+            title: trimmedTitle,
+            description: description.trim(),
             status,
             labels,
             dueDate,
@@ -180,17 +198,16 @@ export default function TaskModal({
         // If assignee was changed or assigned by Admin
         const previousAssignedId = task.assignedUser?._id || "";
         if (assignedUserId !== previousAssignedId && onAssign) {
-          if (assignedUserId) {
-            await onAssign(task._id, assignedUserId);
-          }
+          await onAssign(task._id, assignedUserId || undefined);
         }
 
         setActivityRefreshKey((k) => k + 1);
       } else {
         await onCreate(
           {
-            title,
-            description,
+            title: trimmedTitle,
+            description: description.trim(),
+            assignedUserId: assignedUserId || undefined,
             labels,
             dueDate,
             checklist,
@@ -201,8 +218,23 @@ export default function TaskModal({
 
       onClose();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setError(err?.response?.data?.message || "Something went wrong.");
+      const err = error as {
+        response?: {
+          data?: {
+            message?: string;
+            errors?: Array<{ message: string }> | string[];
+          };
+        };
+      };
+      const apiMsg =
+        err?.response?.data?.message ||
+        (Array.isArray(err?.response?.data?.errors)
+          ? typeof err?.response?.data?.errors[0] === "string"
+            ? err?.response?.data?.errors[0]
+            : (err?.response?.data?.errors[0] as { message: string })?.message
+          : undefined) ||
+        "Failed to save task.";
+      setError(apiMsg);
     } finally {
       setSaving(false);
     }
@@ -265,11 +297,10 @@ export default function TaskModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/50 p-2 sm:p-4 backdrop-blur-sm">
       <div
-        className={`w-full overflow-hidden rounded-2xl bg-white shadow-2xl transition-all ${
-          isEditing
+        className={`w-full overflow-hidden rounded-2xl bg-white shadow-2xl transition-all ${isEditing
             ? "max-w-5xl max-h-[92vh] flex flex-col"
             : "max-w-lg max-h-[90vh] overflow-y-auto"
-        }`}
+          }`}
       >
         {/* Modal Top Nav Bar */}
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gray-50/50">
@@ -286,17 +317,16 @@ export default function TaskModal({
                       setActivityRefreshKey((k) => k + 1);
                     }
                   }}
-                  className={`h-8 rounded-md px-3 text-xs font-semibold cursor-pointer border outline-none transition-colors ${
-                    status === "DONE"
+                  className={`h-8 rounded-md px-3 text-xs font-semibold cursor-pointer border outline-none transition-colors ${status === "DONE"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                       : status === "DOING"
-                      ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
-                  }`}
+                        ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                        : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                    }`}
                 >
-                  <option value="TODO">To Do ▾</option>
-                  <option value="DOING">In Progress ▾</option>
-                  <option value="DONE">Done ▾</option>
+                  <option value="TODO">To Do</option>
+                  <option value="DOING">In Progress</option>
+                  <option value="DONE">Done</option>
                 </select>
               </div>
             ) : (
@@ -312,9 +342,10 @@ export default function TaskModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-lg font-medium text-gray-400 hover:bg-gray-200 hover:text-gray-700 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700 cursor-pointer"
+            aria-label="Close modal"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -360,34 +391,41 @@ export default function TaskModal({
               />
             </div>
 
-            {eligibleUsers.length > 0 && (
-              <div>
-                <label
-                  htmlFor="create-task-assignee"
-                  className="mb-2 block text-sm font-medium text-gray-900"
-                >
-                  Assign To (Optional)
-                </label>
-                <select
-                  id="create-task-assignee"
-                  value={assignedUserId}
-                  onChange={(e) => setAssignedUserId(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                >
-                  <option value="">-- Unassigned --</option>
-                  {eligibleUsers.map((u) => (
+            <div>
+              <label
+                htmlFor="create-task-assignee"
+                className="mb-2 block text-sm font-medium text-gray-900"
+              >
+                Assign To (Optional)
+              </label>
+              <select
+                id="create-task-assignee"
+                value={assignedUserId}
+                onChange={(e) => setAssignedUserId(e.target.value)}
+                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              >
+                <option value="">-- Unassigned --</option>
+                {currentUser?.role === "ADMIN" ? (
+                  eligibleUsers.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.firstName} {u.lastName} (@{u.username})
-                      {u.id === currentUserId
-                        ? " (You)"
-                        : u.role === "ADMIN"
-                        ? " (Admin)"
-                        : ""}
+                      {u.id === effectiveUserId ? " (You)" : u.role === "ADMIN" ? " (Admin)" : ""}
                     </option>
-                  ))}
-                </select>
-              </div>
-            )}
+                  ))
+                ) : (
+                  currentUser && (
+                    <option value={currentUser.id}>
+                      {currentUser.firstName} {currentUser.lastName} (Assign to myself)
+                    </option>
+                  )
+                )}
+              </select>
+              {currentUser?.role !== "ADMIN" && (
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  Normal users can only assign eligible unassigned tasks to themselves.
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
               <button
@@ -464,7 +502,8 @@ export default function TaskModal({
 
                     {dueDate && (
                       <div className="flex items-center gap-1.5 rounded-md bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-semibold text-blue-800">
-                        <span>🕒 Due {new Date(dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Due {new Date(dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                         <button
                           type="button"
                           onClick={() => handleSaveDueDate(null)}
@@ -477,9 +516,9 @@ export default function TaskModal({
                   </div>
                 )}
 
-                {/* Quick Action Pills (Trello Style) */}
+                {/* Quick Action Pills */}
                 <div className="relative flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-400 mr-1">
+                  <span className="text-xs font-semibold text-slate-400 mr-1">
                     Add to card:
                   </span>
 
@@ -492,22 +531,22 @@ export default function TaskModal({
                         setShowLabelsPopover(false);
                         setShowDatesPopover(false);
                       }}
-                      className="flex items-center gap-1.5 rounded-md bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-md bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
                     >
                       <span>+ Add</span>
                     </button>
 
                     {showAddMenu && (
-                      <div className="absolute left-0 top-full mt-2 z-40 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                      <div className="absolute left-0 top-full mt-2 z-40 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                         <button
                           type="button"
                           onClick={() => {
                             setShowAddMenu(false);
                             setShowLabelsPopover(true);
                           }}
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                         >
-                          <span>🏷️</span>
+                          <Tag className="w-3.5 h-3.5 text-slate-500" />
                           <span>Labels</span>
                         </button>
                         <button
@@ -516,9 +555,9 @@ export default function TaskModal({
                             setShowAddMenu(false);
                             setShowDatesPopover(true);
                           }}
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                         >
-                          <span>🕒</span>
+                          <Clock className="w-3.5 h-3.5 text-slate-500" />
                           <span>Due Date</span>
                         </button>
                         <button
@@ -527,9 +566,9 @@ export default function TaskModal({
                             setShowAddMenu(false);
                             setHasChecklist(true);
                           }}
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                         >
-                          <span>☑️</span>
+                          <CheckSquare className="w-3.5 h-3.5 text-slate-500" />
                           <span>Checklist</span>
                         </button>
                       </div>
@@ -545,9 +584,10 @@ export default function TaskModal({
                         setShowDatesPopover(false);
                         setShowAddMenu(false);
                       }}
-                      className="flex items-center gap-1.5 rounded-md bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-md bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
                     >
-                      <span>🏷️ Labels</span>
+                      <Tag className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Labels</span>
                     </button>
 
                     {showLabelsPopover && (
@@ -568,9 +608,10 @@ export default function TaskModal({
                         setShowLabelsPopover(false);
                         setShowAddMenu(false);
                       }}
-                      className="flex items-center gap-1.5 rounded-md bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-md bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
                     >
-                      <span>🕒 Dates</span>
+                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Dates</span>
                     </button>
 
                     {showDatesPopover && (
@@ -586,9 +627,10 @@ export default function TaskModal({
                   <button
                     type="button"
                     onClick={() => setHasChecklist(true)}
-                    className="flex items-center gap-1.5 rounded-md bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-md bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
                   >
-                    <span>☑️ Checklist</span>
+                    <CheckSquare className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Checklist</span>
                   </button>
                 </div>
 
@@ -665,7 +707,7 @@ export default function TaskModal({
                     )}
                   </div>
 
-                  {eligibleUsers.length > 0 ? (
+                  {currentUser?.role === "ADMIN" && eligibleUsers.length > 0 ? (
                     <div className="mt-3">
                       <select
                         id="edit-task-assignee"
@@ -673,8 +715,8 @@ export default function TaskModal({
                         onChange={async (e) => {
                           const newId = e.target.value;
                           setAssignedUserId(newId);
-                          if (onAssign && newId) {
-                            await onAssign(task._id, newId);
+                          if (onAssign) {
+                            await onAssign(task._id, newId || undefined);
                             setActivityRefreshKey((k) => k + 1);
                           }
                         }}
@@ -684,44 +726,48 @@ export default function TaskModal({
                         {eligibleUsers.map((u) => (
                           <option key={u.id} value={u.id}>
                             {u.firstName} {u.lastName} (@{u.username})
-                            {u.id === currentUserId
+                            {u.id === effectiveUserId
                               ? " (You)"
                               : u.role === "ADMIN"
-                              ? " (Admin)"
-                              : ""}
+                                ? " (Admin)"
+                                : ""}
                           </option>
                         ))}
                       </select>
-
-                      {currentUserId && assignedUserId !== currentUserId && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setAssignedUserId(currentUserId);
-                            if (onAssign) {
-                              await onAssign(task._id, currentUserId);
-                              setActivityRefreshKey((k) => k + 1);
-                            }
-                          }}
-                          className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer flex items-center gap-1"
-                        >
-                          <span>⚡ Assign to myself</span>
-                        </button>
-                      )}
                     </div>
                   ) : task.assignedUser ? (
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                        {task.assignedUser.firstName.charAt(0).toUpperCase()}
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {task.assignedUser.profilePicture?.url ? (
+                          <img
+                            src={task.assignedUser.profilePicture.url}
+                            alt={task.assignedUser.firstName}
+                            className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 shrink-0">
+                            {task.assignedUser.firstName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {task.assignedUser.firstName} {task.assignedUser.lastName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            @{task.assignedUser.username}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {task.assignedUser.firstName} {task.assignedUser.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          @{task.assignedUser.username}
-                        </p>
-                      </div>
+                      {task.assignedUser._id === effectiveUserId ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Assigned to you</span>
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">
+                          Assigned member
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-3 flex items-center justify-between gap-3">
@@ -730,7 +776,7 @@ export default function TaskModal({
                           This task is unassigned
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500">
-                          You can assign it to yourself.
+                          You can assign this eligible task to yourself.
                         </p>
                       </div>
 
@@ -743,12 +789,6 @@ export default function TaskModal({
                         {assigning ? "Assigning..." : "Assign to me"}
                       </button>
                     </div>
-                  )}
-
-                  {alreadyAssignedToMe && !eligibleUsers.length && (
-                    <p className="mt-2 text-xs font-medium text-green-600">
-                      ✓ Assigned to you
-                    </p>
                   )}
                 </div>
 
@@ -771,15 +811,31 @@ export default function TaskModal({
                 {/* Metadata & Actions */}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-5 text-xs text-gray-400">
                   <div className="space-y-0.5">
-                    <p>
-                      Created {new Date(task.createdAt).toLocaleDateString()} by{" "}
+                    <p className="flex items-center gap-1.5 flex-wrap">
+                      <span>
+                        Created {new Date(task.createdAt).toLocaleDateString()} at{" "}
+                        {new Date(task.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} by
+                      </span>
+                      {task.creator?.profilePicture?.url ? (
+                        <img
+                          src={task.creator.profilePicture.url}
+                          alt={task.creator.firstName || "Creator"}
+                          className="h-4 w-4 rounded-full object-cover ring-1 ring-slate-200 shrink-0"
+                        />
+                      ) : null}
                       <span className="font-semibold text-gray-700">
                         {task.creator
                           ? `${task.creator.firstName || ""} ${task.creator.lastName || ""}`.trim() ||
-                            `@${task.creator.username}`
+                          `@${task.creator.username}`
                           : "Former Member"}
                       </span>
                     </p>
+                    {task.updatedAt && (
+                      <p className="text-[11px] text-slate-400">
+                        Last updated {new Date(task.updatedAt).toLocaleDateString()} at{" "}
+                        {new Date(task.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
                   </div>
 
                   {onDelete && (

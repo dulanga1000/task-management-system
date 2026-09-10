@@ -132,10 +132,10 @@ export const deleteFromStorage = async (storageKey: string): Promise<void> => {
   await client.send(command);
 };
 
-// Generate a short-lived presigned URL for viewing/downloading an attachment securely
+// Generate a short-lived presigned URL for viewing/downloading an attachment or avatar securely
 export const getPresignedFileUrl = async (
   storageKey: string,
-  expiresInSeconds: number = 3600
+  expiresInSeconds: number = env.supabase.signedUrlExpiresIn
 ): Promise<string> => {
   const client = getS3Client();
   const command = new GetObjectCommand({

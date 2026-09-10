@@ -117,10 +117,10 @@ export default function AdminUsersPage() {
     tasksLoading
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
-          <p className="mt-4 text-xs font-semibold text-gray-500 tracking-wide">
+          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-blue-500/20 border-t-blue-600" />
+          <p className="mt-4 text-xs font-semibold text-slate-500 tracking-wide">
             Loading team directory...
           </p>
         </div>
@@ -142,56 +142,56 @@ export default function AdminUsersPage() {
   const error = usersError || tasksError;
 
   return (
-    <main className="min-h-screen bg-gray-50/60 pb-16">
+    <main className="min-h-screen bg-slate-50/60 pb-16">
       <AdminNavigation />
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 space-y-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                 <Users className="h-4 w-4" />
               </div>
-              <h1 className="text-xl font-bold text-gray-950 tracking-tight">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                 User Directory & Accounts
               </h1>
             </div>
-            <p className="mt-1 text-xs text-gray-400 font-medium">
+            <p className="mt-1 text-xs text-slate-500 font-medium">
               Oversee all registered team accounts, workload distribution, and role classifications.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs">
+            <span className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs">
               Total Members: {totalUsersCount}
             </span>
           </div>
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
             {error}
           </div>
         )}
 
         {/* Filter & Search Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gray-200/80 bg-white p-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
           {/* Search Input */}
           <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search by full name, username, or email address..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-9 text-xs text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-9 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50/80 p-1">
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50/80 p-1">
             {(["ALL", "ADMIN", "USER"] as const).map((role) => (
               <button
                 key={role}
@@ -207,8 +207,8 @@ export default function AdminUsersPage() {
                 onClick={() => setRoleFilter(role)}
                 className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
                   roleFilter === role
-                    ? "bg-white text-gray-900 shadow-xs ring-1 ring-gray-200"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {role === "ALL" ? "All Roles" : role === "ADMIN" ? "Admins" : "Standard Users"}

@@ -31,3 +31,22 @@ export const deleteTaskAttachment = async (
 ): Promise<void> => {
   await api.delete(`/tasks/${taskId}/attachments/${attachmentId}`);
 };
+
+export interface AttachmentUrlResponse {
+  success: boolean;
+  message: string;
+  data: {
+    url: string;
+    expiresIn: number;
+  };
+}
+
+export const getTaskAttachmentSignedUrl = async (
+  taskId: string,
+  attachmentId: string
+): Promise<string> => {
+  const response = await api.get<AttachmentUrlResponse>(
+    `/tasks/${taskId}/attachments/${attachmentId}/url`
+  );
+  return response.data.data.url;
+};

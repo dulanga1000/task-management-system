@@ -48,7 +48,7 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
       trim: true,
-      maxlength: 2000,
+      maxlength: 10000,
     },
 
     status: {

@@ -15,6 +15,9 @@ export interface ActivityUser {
   lastName: string;
   username: string;
   email?: string;
+  profilePicture?: {
+    url?: string | null;
+  } | null;
 }
 
 export interface ActivityDetails {
@@ -22,6 +25,7 @@ export interface ActivityDetails {
   newValue?: string;
   fileName?: string;
   assignedToName?: string;
+  assignedToUserId?: string;
   comment?: string;
 }
 

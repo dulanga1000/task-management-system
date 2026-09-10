@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { X } from "lucide-react";
 
 interface DatesPopoverProps {
   currentDueDate?: string | null;
@@ -46,9 +47,10 @@ export default function DatesPopover({
         <button
           type="button"
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-sm font-semibold cursor-pointer"
+          className="text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+          aria-label="Close"
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
       </div>
 

@@ -87,13 +87,43 @@ export default function AdminOverviewPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50/60 pb-16">
+    <main className="min-h-screen bg-slate-50/60 selection:bg-blue-100 selection:text-blue-900 pb-20">
       <AdminNavigation />
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 space-y-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 lg:px-8 space-y-8">
+        {/* Page Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              System Overview
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Welcome back, {user?.firstName}. Monitor team velocity, task distribution, and workspace accounts.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              <span>Kanban Board</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push("/admin/tasks")}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors cursor-pointer"
+            >
+              <span>Manage Tasks</span>
+            </button>
+          </div>
+        </div>
+
         {/* Error Notification */}
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 shadow-xs">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 shadow-2xs">
             {error}
           </div>
         )}

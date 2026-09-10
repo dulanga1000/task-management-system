@@ -50,27 +50,27 @@ export default function AdminTaskTable({
   const displayedTasks = limit ? tasks.slice(0, limit) : tasks;
 
   return (
-    <section className="rounded-2xl border border-gray-200/80 bg-white shadow-xs overflow-hidden">
+    <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
       {/* Table Header / Action Bar */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <h2 className="text-sm font-bold text-gray-900 tracking-tight">
+          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
             {title}
           </h2>
-          <p className="text-xs text-gray-400 font-medium">
+          <p className="text-xs text-slate-400 font-medium">
             {subtitle}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
             {displayedTasks.length} {displayedTasks.length === 1 ? "task" : "tasks"}
           </span>
 
           {showViewAllLink && (
             <Link
               href="/admin/tasks"
-              className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
             >
               <span>View all</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -83,42 +83,42 @@ export default function AdminTaskTable({
       <div className="overflow-x-auto">
         {displayedTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400 border border-gray-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 border border-slate-200">
               <Inbox className="h-6 w-6" />
             </div>
-            <p className="mt-3 text-sm font-bold text-gray-800">
+            <p className="mt-3 text-sm font-bold text-slate-800">
               No tasks found
             </p>
-            <p className="mt-1 text-xs text-gray-400 max-w-xs">
+            <p className="mt-1 text-xs text-slate-400 max-w-xs">
               There are no tasks matching the selected filters or currently created in the system.
             </p>
           </div>
         ) : (
           <table className="w-full min-w-[850px] text-left">
-            <thead className="bg-gray-50/70 border-b border-gray-100">
+            <thead className="bg-slate-50/70 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Task
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Creator
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Assigned User
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Status
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Created
                 </th>
-                <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Actions
                 </th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {displayedTasks.map((task) => (
                 <AdminTaskRow
                   key={task._id}

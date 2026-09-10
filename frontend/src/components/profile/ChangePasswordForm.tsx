@@ -119,23 +119,23 @@ export const ChangePasswordForm: React.FC = () => {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm sm:p-8">
-      <div className="border-b border-gray-100 pb-5 flex items-center justify-between">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-8">
+      <div className="border-b border-slate-100 pb-5 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Security & Password</h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900">Security & Password</h2>
+          <p className="mt-1 text-xs text-slate-500">
             Ensure your account stays protected by using a robust, unique password.
           </p>
         </div>
-        <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
           <ShieldCheck className="w-5 h-5" />
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         {/* Error Alert */}
         {errorMessage && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 flex items-center gap-2">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-semibold text-rose-700 flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -145,7 +145,7 @@ export const ChangePasswordForm: React.FC = () => {
 
         {/* Success Alert */}
         {successMessage && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-700 flex items-center gap-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs font-semibold text-emerald-700 flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -157,7 +157,7 @@ export const ChangePasswordForm: React.FC = () => {
         <div>
           <label
             htmlFor="currentPassword"
-            className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-700"
+            className="mb-1.5 block text-xs font-semibold text-slate-700"
           >
             Current Password
           </label>
@@ -172,13 +172,13 @@ export const ChangePasswordForm: React.FC = () => {
                 setCurrentPassword(e.target.value);
                 setErrorMessage(null);
               }}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 pr-14 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 pr-14 text-xs text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
               placeholder="Enter current password"
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-gray-800 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               {showCurrent ? "Hide" : "Show"}
             </button>
@@ -187,16 +187,16 @@ export const ChangePasswordForm: React.FC = () => {
 
         {/* New Password */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="newPassword"
-              className="block text-xs font-semibold uppercase tracking-wider text-gray-700"
+              className="block text-xs font-semibold text-slate-700"
             >
               New Password
             </label>
             {newPassword.length > 0 && (
-              <span className="text-xs font-semibold text-gray-500">
-                Strength: <span className="font-bold">{getStrengthLabel()}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                Strength: <span className="font-bold text-slate-800">{getStrengthLabel()}</span>
               </span>
             )}
           </div>
@@ -214,13 +214,13 @@ export const ChangePasswordForm: React.FC = () => {
                 setNewPassword(e.target.value);
                 setErrorMessage(null);
               }}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 pr-14 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 pr-14 text-xs text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
               placeholder="Enter at least 8 characters"
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-gray-800 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               {showNew ? "Hide" : "Show"}
             </button>
@@ -228,12 +228,12 @@ export const ChangePasswordForm: React.FC = () => {
 
           {/* Strength progress bar */}
           {newPassword.length > 0 && (
-            <div className="mt-2 flex gap-1.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className="mt-2 flex gap-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
               {[1, 2, 3, 4, 5].map((level) => (
                 <div
                   key={level}
                   className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                    strengthScore >= level ? getStrengthColor() : "bg-gray-200"
+                    strengthScore >= level ? getStrengthColor() : "bg-slate-200"
                   }`}
                 />
               ))}
@@ -242,72 +242,72 @@ export const ChangePasswordForm: React.FC = () => {
 
           {/* Live Password Conditions Checklist - Only shown on focus or when typing */}
           {(isNewPasswordFocused || newPassword.length > 0) && (
-            <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-2 text-xs animate-in fade-in duration-150">
-              <p className="font-semibold text-gray-700 text-[11px] uppercase tracking-wider mb-2">
+            <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5 space-y-2 text-xs animate-in fade-in duration-150">
+              <p className="font-semibold text-slate-700 text-xs mb-2">
                 Password Requirements
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    hasMinLength ? "text-emerald-700 font-semibold" : "text-gray-500"
+                    hasMinLength ? "text-emerald-700 font-semibold" : "text-slate-500"
                   }`}
                 >
                   {hasMinLength ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block shrink-0" />
                   )}
                   <span>At least 8 characters</span>
                 </div>
 
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    hasUppercase ? "text-emerald-700 font-semibold" : "text-gray-500"
+                    hasUppercase ? "text-emerald-700 font-semibold" : "text-slate-500"
                   }`}
                 >
                   {hasUppercase ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block shrink-0" />
                   )}
                   <span>One uppercase letter (A-Z)</span>
                 </div>
 
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    hasLowercase ? "text-emerald-700 font-semibold" : "text-gray-500"
+                    hasLowercase ? "text-emerald-700 font-semibold" : "text-slate-500"
                   }`}
                 >
                   {hasLowercase ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block shrink-0" />
                   )}
                   <span>One lowercase letter (a-z)</span>
                 </div>
 
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    hasNumber ? "text-emerald-700 font-semibold" : "text-gray-500"
+                    hasNumber ? "text-emerald-700 font-semibold" : "text-slate-500"
                   }`}
                 >
                   {hasNumber ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block shrink-0" />
                   )}
                   <span>At least one number (0-9)</span>
                 </div>
 
                 <div
                   className={`flex items-center gap-1.5 transition-colors ${
-                    hasSpecial ? "text-emerald-700 font-semibold" : "text-gray-500"
+                    hasSpecial ? "text-emerald-700 font-semibold" : "text-slate-500"
                   }`}
                 >
                   {hasSpecial ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border border-gray-300 inline-block shrink-0" />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block shrink-0" />
                   )}
                   <span>One special character (!@#$)</span>
                 </div>
@@ -319,9 +319,9 @@ export const ChangePasswordForm: React.FC = () => {
                     }`}
                   >
                     {isDifferentFromCurrent ? (
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                     ) : (
-                      <X className="w-4 h-4 text-rose-500 shrink-0 stroke-[2.5]" />
+                      <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[2.5]" />
                     )}
                     <span>Different from current password</span>
                   </div>
@@ -333,10 +333,10 @@ export const ChangePasswordForm: React.FC = () => {
 
         {/* Confirm New Password */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="confirmPassword"
-              className="block text-xs font-semibold uppercase tracking-wider text-gray-700"
+              className="block text-xs font-semibold text-slate-700"
             >
               Confirm New Password
             </label>
@@ -344,20 +344,20 @@ export const ChangePasswordForm: React.FC = () => {
             {/* Live Match Indicator Badge */}
             {hasConfirmTyped && (
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                   isMatching
-                    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20"
-                    : "bg-red-50 text-red-700 ring-1 ring-red-600/20"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-rose-50 text-rose-700 border-rose-200"
                 }`}
               >
                 {isMatching ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-3 h-3 text-emerald-600" />
                     <span>Passwords match</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-3.5 h-3.5 text-red-600" />
+                    <X className="w-3 h-3 text-rose-600" />
                     <span>Passwords do not match</span>
                   </>
                 )}
@@ -376,19 +376,19 @@ export const ChangePasswordForm: React.FC = () => {
                 setConfirmPassword(e.target.value);
                 setErrorMessage(null);
               }}
-              className={`h-11 w-full rounded-xl border bg-white px-3.5 pr-14 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 disabled:opacity-60 ${
+              className={`h-10 w-full rounded-xl border bg-slate-50/60 px-3.5 pr-14 text-xs text-slate-900 outline-none transition-all placeholder:text-slate-400 disabled:opacity-60 ${
                 hasConfirmTyped
                   ? isMatching
                     ? "border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                    : "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
-                  : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    : "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                  : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               }`}
               placeholder="Re-enter new password"
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-gray-800 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>
@@ -400,11 +400,11 @@ export const ChangePasswordForm: React.FC = () => {
           <button
             type="submit"
             disabled={loading || !currentPassword || !allConditionsMet || !isMatching}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>

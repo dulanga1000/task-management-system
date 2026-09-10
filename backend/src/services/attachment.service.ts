@@ -92,7 +92,10 @@ export const uploadAttachment = async (
   }
 
   // Generate short-lived presigned URL for the uploaded object
-  const url = await getPresignedFileUrl(storageKey, 3600);
+  const url = await getPresignedFileUrl(
+    storageKey,
+    env.supabase.signedUrlExpiresIn
+  );
 
   const populated = await Attachment.findById(createdAttachment._id)
     .populate("uploadedBy", "firstName lastName username email")
@@ -108,10 +111,11 @@ export const uploadAttachment = async (
   } as unknown as AttachmentResponseDto;
 };
 
-// Retrieve all attachments for a task
-
+// Retrieve all attachments for an authorized task
 export const getTaskAttachments = async (
-  taskId: string
+  taskId: string,
+  userId: string,
+  userRole: UserRole
 ): Promise<AttachmentResponseDto[]> => {
   validateObjectId(taskId, "task ID");
 
@@ -120,22 +124,23 @@ export const getTaskAttachments = async (
     throw new AppError("Task not found", 404);
   }
 
+  // Retrieve attachments for the task
   const attachments = await Attachment.find({ task: taskId })
     .populate("uploadedBy", "firstName lastName username email")
     .sort({ createdAt: -1 })
     .lean();
 
-  // Attach signed URLs for each attachment
+  // Attach short-lived signed URLs for each attachment
   const attachmentsWithUrls = await Promise.all(
     attachments.map(async (att) => {
       let url = "";
       try {
-        url = await getPresignedFileUrl(att.storageKey, 3600);
-      } catch (err) {
-        console.error(
-          `Failed to generate presigned URL for ${att.storageKey}:`,
-          err
+        url = await getPresignedFileUrl(
+          att.storageKey,
+          env.supabase.signedUrlExpiresIn
         );
+      } catch {
+        console.warn(`Failed to generate signed URL for attachment ID: ${att._id}`);
       }
       return {
         ...att,
@@ -145,6 +150,41 @@ export const getTaskAttachments = async (
   );
 
   return attachmentsWithUrls as unknown as AttachmentResponseDto[];
+};
+
+// Retrieve a single fresh signed URL for an attachment on demand
+export const getSingleAttachmentSignedUrl = async (
+  taskId: string,
+  attachmentId: string,
+  userId: string,
+  userRole: UserRole
+): Promise<{ url: string; expiresIn: number }> => {
+  validateObjectId(taskId, "task ID");
+  validateObjectId(attachmentId, "attachment ID");
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new AppError("Task not found", 404);
+  }
+
+  const attachment = await Attachment.findById(attachmentId);
+  if (!attachment) {
+    throw new AppError("Attachment not found", 404);
+  }
+
+  if (attachment.task.toString() !== taskId) {
+    throw new AppError("Attachment does not belong to specified task", 400);
+  }
+
+  const url = await getPresignedFileUrl(
+    attachment.storageKey,
+    env.supabase.signedUrlExpiresIn
+  );
+
+  return {
+    url,
+    expiresIn: env.supabase.signedUrlExpiresIn,
+  };
 };
 
 

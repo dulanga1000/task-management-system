@@ -7,16 +7,18 @@ export type ActivityType =
   | "DESCRIPTION_UPDATED"
   | "DETAILS_UPDATED"
   | "TASK_ASSIGNED"
+  | "TASK_UNASSIGNED"
   | "ATTACHMENT_ADDED"
   | "ATTACHMENT_DELETED"
   | "COMMENT_ADDED";
 
 export interface IActivityDetails {
-  oldValue?: string;
-  newValue?: string;
-  fileName?: string;
-  assignedToName?: string;
-  comment?: string;
+  oldValue?: string | undefined;
+  newValue?: string | undefined;
+  fileName?: string | undefined;
+  assignedToName?: string | undefined;
+  assignedToUserId?: string | undefined;
+  comment?: string | undefined;
 }
 
 export interface IActivity extends Document {
@@ -50,6 +52,7 @@ const activitySchema = new Schema<IActivity>(
         "DESCRIPTION_UPDATED",
         "DETAILS_UPDATED",
         "TASK_ASSIGNED",
+        "TASK_UNASSIGNED",
         "ATTACHMENT_ADDED",
         "ATTACHMENT_DELETED",
         "COMMENT_ADDED",
@@ -61,6 +64,7 @@ const activitySchema = new Schema<IActivity>(
       newValue: { type: String },
       fileName: { type: String },
       assignedToName: { type: String },
+      assignedToUserId: { type: Schema.Types.ObjectId, ref: "User" },
       comment: { type: String },
     },
   },
